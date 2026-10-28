@@ -209,7 +209,9 @@ fn golden_scenes() {
         assert_eq!(reference.len(), pixels.len(), "golden size changed");
         let mut differing = 0usize;
         let mut max_delta = 0u8;
-        for (expected, actual) in reference.chunks_exact(4).zip(pixels.chunks_exact(4)) {
+        let expected_pixels = reference.as_chunks::<4>().0;
+        let actual_pixels = pixels.as_chunks::<4>().0;
+        for (expected, actual) in expected_pixels.iter().zip(actual_pixels) {
             let delta = expected
                 .iter()
                 .zip(actual)
