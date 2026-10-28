@@ -1,0 +1,17 @@
+﻿[package]
+name = "grafikr"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Native Rust desktop UI framework with GPU rendering and reactive state"
+
+[dependencies]
+grafikr-core.workspace = true
+grafikr-render.workspace = true
+grafikr-widgets.workspace = true
+grafikr-shell.workspace = true
+
+[dev-dependencies]
+accesskit.workspace = true

@@ -1,0 +1,15 @@
+﻿[package]
+name = "grafikr-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Core retained tree, layout, events, and reactive state for Grafikr"
+
+[dependencies]
+taffy.workspace = true
+parley.workspace = true
+accesskit.workspace = true
+
+[dev-dependencies]

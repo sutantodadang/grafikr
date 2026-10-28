@@ -1,0 +1,20 @@
+﻿[package]
+name = "grafikr-shell"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "winit shell, wgpu surfaces, clipboard, IME, and AccessKit for Grafikr"
+
+[dependencies]
+grafikr-core.workspace = true
+grafikr-render.workspace = true
+grafikr-widgets.workspace = true
+winit.workspace = true
+wgpu.workspace = true
+accesskit.workspace = true
+accesskit_winit.workspace = true
+pollster.workspace = true
+arboard.workspace = true
+log.workspace = true

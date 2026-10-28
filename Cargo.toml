@@ -1,0 +1,57 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/grafikr",
+    "crates/grafikr-core",
+    "crates/grafikr-shell",
+    "crates/grafikr-render",
+    "crates/grafikr-widgets",
+    "examples/counter",
+    "examples/form",
+    "examples/dashboard",
+    "examples/settings",
+    "examples/windows",
+    "examples/dialog",
+    "examples/tabs",
+    "examples/menu",
+    "examples/image",
+    "examples/spinner",
+    "examples/combo",
+    "examples/datagrid",
+    "examples/tree",
+    "examples/tooltip",
+    "benchmarks",
+]
+default-members = ["examples/counter"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2024"
+rust-version = "1.88"
+license = "AGPL-3.0-only"
+repository = "https://github.com/sutantodadang/grafikr"
+
+[workspace.dependencies]
+grafikr-core = { version = "1.0.0", path = "crates/grafikr-core" }
+grafikr-render = { version = "1.0.0", path = "crates/grafikr-render" }
+grafikr-widgets = { version = "1.0.0", path = "crates/grafikr-widgets" }
+grafikr-shell = { version = "1.0.0", path = "crates/grafikr-shell" }
+grafikr = { version = "1.0.0", path = "crates/grafikr" }
+
+# Pinned per docs/ROADMAP.md §11: isolate fast-moving graphics deps.
+winit = { version = "0.30.12", features = ["rwh_06"] }
+wgpu = { version = "30.0.1", default-features = false, features = ["dx12", "metal", "vulkan", "gles", "wgsl", "std"] }
+accesskit = { version = "0.25.2" }
+accesskit_winit = { version = "0.34.2", features = ["rwh_06"] }
+taffy = { version = "0.15.1", default-features = false, features = ["std", "flexbox", "grid", "taffy_tree"] }
+parley = { version = "0.12.0", default-features = false, features = ["std", "system", "complex-scripts"] }
+swash = "0.2.6"
+bytemuck = { version = "1.24", features = ["derive"] }
+pollster = "0.4"
+arboard = { version = "3.6", default-features = false }
+log = "0.4"
+env_logger = "0.11"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

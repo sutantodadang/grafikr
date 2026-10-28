@@ -1,0 +1,20 @@
+﻿[package]
+name = "grafikr-render"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "wgpu renderer for Grafikr display lists and glyph atlases"
+
+[dependencies]
+grafikr-core.workspace = true
+parley.workspace = true
+wgpu.workspace = true
+bytemuck.workspace = true
+swash.workspace = true
+log.workspace = true
+
+[dev-dependencies]
+pollster.workspace = true
+png = "0.17"
