@@ -1,4 +1,4 @@
-﻿# Grafikr
+# Grafikr
 
 A native desktop UI framework for Rust with a retained widget tree, reactive
 state, its own GPU renderer (wgpu), and Unicode text through Parley. No WebView,

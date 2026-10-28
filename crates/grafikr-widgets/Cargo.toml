@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 name = "grafikr-widgets"
 version.workspace = true
 edition.workspace = true
