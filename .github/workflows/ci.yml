@@ -20,7 +20,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev \
-            libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev
+            libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev \
+            libfontconfig1-dev
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
 
@@ -38,7 +39,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev \
-            libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev
+            libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev \
+            libfontconfig1-dev
       - name: Test
         run: cargo test --workspace
         env:
@@ -55,5 +57,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev \
-            libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev
+            libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev \
+            libfontconfig1-dev
       - run: cargo run -p grafikr-bench --release
