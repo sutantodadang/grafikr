@@ -22,7 +22,7 @@ view tree, GPU context, and AccessKit tree.
 ## 2. Reactive state
 
 ```rust
-use grafikr::{Signal, bind, button, column, row, text};
+use grafikr::{Signal, View, bind, button, column, row, text};
 
 fn counter() -> impl View {
     let count = Signal::new(0);

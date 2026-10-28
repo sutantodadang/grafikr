@@ -1,7 +1,7 @@
 # Grafikr — Plan and Roadmap
 
-**Status:** Initial proposal  
-**Date:** October 27, 2026
+**Status:** Implemented through 1.0; post-1.0 work continues  
+**Last updated:** October 28, 2026
 
 ## 1. Vision
 

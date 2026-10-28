@@ -49,6 +49,8 @@ Existing calls are unchanged.
 New `Transition` and `Easing` APIs in the `grafikr` crate:
 
 ```rust
+use grafikr::{Easing, Transition};
+
 let fade = Transition::new(0.0).duration(0.18).easing(Easing::EaseOutCubic);
 fade.set_target(1.0);
 let active = fade.tick(dt);
