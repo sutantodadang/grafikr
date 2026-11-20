@@ -228,6 +228,28 @@ class BindingRunnerTests(unittest.TestCase):
         self.assertEqual([check["status"] for check in evidence["checks"]], ["PASS", "FAIL"])
         self.assertEqual(evidence["checks"][1]["exit_code"], 4)
 
+    def test_command_failure_keeps_diagnostic_before_large_output_tail(self):
+        self.matrix(
+            {
+                "cwd": ".",
+                "checks": [
+                    {
+                        "name": "swift-build",
+                        "argv": [
+                            sys.executable,
+                            "-c",
+                            "import sys; print('swift compiler diagnostic'); print('x' * 8000); raise SystemExit(1)",
+                        ],
+                    }
+                ],
+                "helper_paths": ["helper.py"],
+            }
+        )
+
+        self.assertFalse(self.run_suite())
+        evidence = json.loads(self.out.read_text(encoding="utf-8"))
+        self.assertIn("swift compiler diagnostic", evidence["checks"][0]["stdout"])
+
     def test_missing_test_tool_is_evidence_not_an_exception(self):
         self.matrix(
             {

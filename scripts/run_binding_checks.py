@@ -17,6 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MATRIX = ROOT / "bindings/sdk-matrix.json"
+MAX_CAPTURED_OUTPUT_CHARS = 16_000
 WIDGETS = ROOT / "bindings/protocol/v1/widgets.json"
 CASES = ROOT / "bindings/protocol/v1/fixtures/sdk-cases.json"
 RUNTIME_CLASSIFIERS = {
@@ -321,8 +322,8 @@ def run_binding_checks(
                     check_result.update(
                         exit_code=completed.returncode,
                         status="PASS" if completed.returncode == 0 else "FAIL",
-                        stdout=completed.stdout[-4000:],
-                        stderr=completed.stderr[-4000:],
+                        stdout=completed.stdout[-MAX_CAPTURED_OUTPUT_CHARS:],
+                        stderr=completed.stderr[-MAX_CAPTURED_OUTPUT_CHARS:],
                     )
                 except FileNotFoundError as error:
                     check_result["stderr"] = f"tool or test command is missing: {error}"
