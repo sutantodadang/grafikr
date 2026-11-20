@@ -1,0 +1,30 @@
+{
+  "protocol": {"major": 1, "minor": 0},
+  "limits": {"json_depth": 64, "frame_bytes_including_lf": 8388608, "nodes": 100000, "states": 100000, "subscriptions": 100000},
+  "widgets": {
+    "Column": {"children": true, "properties": {"gap": "number", "padding": "number", "background": "color", "radius": "number", "width": "number", "transform": "transform"}},
+    "Row": {"children": true, "properties": {"gap": "number", "padding": "number", "background": "color", "radius": "number", "height": "number", "transform": "transform"}},
+    "Grid": {"children": true, "properties": {"columns": "u16", "gap": "number", "padding": "number", "width": "number", "transform": "transform"}},
+    "Stack": {"children": true, "properties": {"width": "number", "height": "number", "transform": "transform"}},
+    "Text": {"children": false, "properties": {"text": "string", "size": "number", "color": "color"}},
+    "Button": {"children": false, "properties": {"label": "string", "variant": "primary|secondary|icon"}, "events": ["click"]},
+    "TextField": {"children": false, "properties": {"text": "string", "width": "number", "multiline": "boolean", "password": "boolean"}, "events": ["change"]},
+    "Checkbox": {"children": false, "properties": {"label": "string", "checked": "boolean"}, "events": ["change"]},
+    "Radio": {"children": false, "properties": {"label": "string", "group": "state", "value": "u64"}, "events": ["change"]},
+    "Switch": {"children": false, "properties": {"label": "string", "checked": "boolean"}, "events": ["change"]},
+    "Slider": {"children": false, "properties": {"value": "f32", "min": "f32", "max": "f32", "step": "f32", "width": "f32"}, "events": ["change"]},
+    "ProgressBar": {"children": false, "properties": {"value": "f32", "width": "f32"}},
+    "Spinner": {"children": false, "properties": {"size": "f32", "label": "string"}},
+    "ScrollView": {"children": true, "slots": ["content"], "properties": {"width": "f32", "height": "f32", "grow": "boolean"}},
+    "VirtualList": {"children": false, "properties": {"row_count": "u64", "row_height": "f32", "width": "f32", "height": "f32"}, "events": ["select", "data.request"]},
+    "DataGrid": {"children": false, "properties": {"columns": "GridColumn[]", "row_count": "u64", "row_height": "f32", "width": "f32", "height": "f32", "selected": "u64"}, "events": ["select", "data.request"]},
+    "TreeView": {"children": false, "properties": {"roots": "TreeNode[]", "width": "f32", "height": "f32", "selected": "string"}, "events": ["select"]},
+    "Modal": {"children": true, "slots": ["content"], "properties": {"open": "boolean", "width": "f32"}},
+    "Popup": {"children": true, "slots": ["content"], "properties": {"open": "boolean", "x": "f32", "y": "f32", "width": "f32"}},
+    "Tabs": {"children": true, "slots": ["panes"], "properties": {"labels": "string[]", "active": "u64", "width": "f32", "height": "f32"}, "events": ["change"]},
+    "ComboBox": {"children": false, "properties": {"options": "string[]", "selected": "u64", "width": "f32"}, "events": ["select"]},
+    "Tooltip": {"children": true, "slots": ["content"], "properties": {"label": "string", "delay_ms": "u64"}},
+    "Image": {"children": false, "properties": {"image": "ImageHandle", "width": "f32", "height": "f32", "label": "string"}},
+    "Canvas": {"children": false, "properties": {"commands": "CanvasCommand[]", "label": "string", "width": "f32", "height": "f32"}, "events": ["resize"]}
+  }
+}

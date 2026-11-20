@@ -1,49 +1,86 @@
 //! Indeterminate spinner. Uses the runtime animation clock.
 
+use std::rc::Rc;
 use std::time::Instant;
 
-use grafikr_core::{MeasureCx, MountCx, NodeId, PaintCx, Point, Rect, Size, Style, View, Widget};
+use grafikr_core::{
+    DirtyFlags, MeasureCx, MountCx, NodeId, PaintCx, Point, Rect, Signal, Size, Style, View,
+    Widget, observe,
+};
 
 use crate::into_views;
 
 const DOTS: usize = 10;
 
 pub struct Spinner {
-    size: f32,
-    label: String,
+    size: Signal<f32>,
+    label: Signal<String>,
 }
 
 pub fn spinner() -> Spinner {
     Spinner {
-        size: 28.0,
-        label: "Loading".to_owned(),
+        size: Signal::new(28.0),
+        label: Signal::new("Loading".to_owned()),
     }
 }
 
 impl Spinner {
-    pub fn size(mut self, size: f32) -> Self {
-        self.size = size.max(12.0);
+    pub fn size(self, size: f32) -> Self {
+        self.size.set(size.max(12.0));
         self
     }
 
-    pub fn label(mut self, label: impl Into<String>) -> Self {
-        self.label = label.into();
+    pub fn label(self, label: impl Into<String>) -> Self {
+        self.label.set(label.into());
         self
+    }
+
+    pub(crate) fn controller(&self) -> SpinnerController {
+        SpinnerController {
+            size: self.size.clone(),
+            label: self.label.clone(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct SpinnerController {
+    size: Signal<f32>,
+    label: Signal<String>,
+}
+impl SpinnerController {
+    pub(crate) fn set_size(&self, value: f32) {
+        self.size.set(value);
+    }
+    pub(crate) fn set_label(&self, value: String) {
+        self.label.set(value);
     }
 }
 
 impl View for Spinner {
     fn mount(&self, cx: &mut MountCx) -> NodeId {
         let id = cx.add_node(Style {
-            width: Some(self.size),
-            height: Some(self.size),
+            width: Some(self.size.get()),
+            height: Some(self.size.get()),
             ..Style::default()
+        });
+        let runtime = cx.runtime.clone();
+        let subscriber: Rc<dyn Fn()> = Rc::new(move || {
+            runtime.invalidate(
+                id,
+                DirtyFlags::LAYOUT | DirtyFlags::PAINT | DirtyFlags::ACCESSIBILITY,
+            )
+        });
+        observe(&subscriber, || {
+            self.size.get();
+            self.label.get();
         });
         cx.set_widget(
             id,
             SpinnerWidget {
                 start: Instant::now(),
                 label: self.label.clone(),
+                _subscriber: subscriber,
             },
         );
         id
@@ -52,7 +89,8 @@ impl View for Spinner {
 
 struct SpinnerWidget {
     start: Instant,
-    label: String,
+    label: Signal<String>,
+    _subscriber: Rc<dyn Fn()>,
 }
 
 impl Widget for SpinnerWidget {
@@ -83,7 +121,7 @@ impl Widget for SpinnerWidget {
 
     fn accessibility(&mut self, node: &mut accesskit::Node) {
         node.set_role(accesskit::Role::ProgressIndicator);
-        node.set_label(self.label.clone());
+        node.set_label(self.label.get());
     }
 }
 

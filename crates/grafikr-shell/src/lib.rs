@@ -1,12 +1,15 @@
 //! Native window shell: winit event loop, wgpu surfaces, clipboard, IME, AccessKit.
 
+mod controlled;
+pub use controlled::{AppDriver, ShellCx, ShellError, ShellWindowId, WakeHandle};
+
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use accesskit_winit::Adapter;
-use grafikr_core::{Clipboard, Key, Modifiers, MouseButton, Size, Theme, UiEvent, View};
+use grafikr_core::{Clipboard, Key, Modifiers, MouseButton, Size, Style, Theme, UiEvent, View};
 use grafikr_render::Renderer;
 use winit::application::ApplicationHandler;
 use winit::dpi::{LogicalSize, PhysicalPosition, PhysicalSize};
@@ -79,10 +82,20 @@ impl App {
     }
 
     pub fn run(self) -> Result<(), Box<dyn Error>> {
-        let event_loop = EventLoop::<UserEvent>::with_user_event().build()?;
+        self.run_inner(None)
+    }
+
+    pub fn run_controlled(self, driver: impl AppDriver) -> Result<(), Box<dyn Error>> {
+        let mut app = self;
+        app.windows.clear();
+        app.run_inner(Some(Box::new(driver)))
+    }
+
+    fn run_inner(self, driver: Option<Box<dyn AppDriver>>) -> Result<(), Box<dyn Error>> {
+        let event_loop = EventLoop::<LoopEvent>::with_user_event().build()?;
         event_loop.set_control_flow(ControlFlow::Wait);
         let proxy = event_loop.create_proxy();
-        let mut shell = Shell::new(self, proxy);
+        let mut shell = Shell::new(self, proxy, driver);
         event_loop.run_app(&mut shell)?;
         Ok(())
     }
@@ -92,6 +105,17 @@ impl App {
 pub enum UserEvent {
     AccessKit(accesskit_winit::Event),
     DeviceLost,
+}
+
+enum LoopEvent {
+    User(UserEvent),
+    Wake,
+}
+
+impl From<accesskit_winit::Event> for LoopEvent {
+    fn from(event: accesskit_winit::Event) -> Self {
+        Self::User(UserEvent::AccessKit(event))
+    }
 }
 
 impl From<accesskit_winit::Event> for UserEvent {
@@ -111,7 +135,7 @@ struct Gpu {
 impl Gpu {
     fn new(
         window: &Arc<Window>,
-        proxy: &EventLoopProxy<UserEvent>,
+        proxy: &EventLoopProxy<LoopEvent>,
     ) -> Result<Self, Box<dyn Error>> {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
         let surface = instance.create_surface(window.clone())?;
@@ -134,7 +158,7 @@ impl Gpu {
                 return;
             }
             log::error!("grafikr: device lost ({reason:?}): {message}");
-            let _ = proxy.send_event(UserEvent::DeviceLost);
+            let _ = proxy.send_event(LoopEvent::User(UserEvent::DeviceLost));
         });
         let physical = window.inner_size();
         let mut config = surface
@@ -157,7 +181,7 @@ impl Gpu {
 struct WindowState {
     window: Arc<Window>,
     gpu: Gpu,
-    proxy: EventLoopProxy<UserEvent>,
+    proxy: EventLoopProxy<LoopEvent>,
     ui: grafikr_core::Ui,
     a11y: Adapter,
     modifiers: Modifiers,
@@ -172,7 +196,7 @@ impl WindowState {
         event_loop: &ActiveEventLoop,
         spec: WindowSpec,
         theme: &Theme,
-        proxy: EventLoopProxy<UserEvent>,
+        proxy: EventLoopProxy<LoopEvent>,
     ) -> Result<Self, Box<dyn Error>> {
         let attributes = Window::default_attributes()
             .with_title(spec.title.clone())
@@ -374,23 +398,209 @@ impl WindowState {
 
 struct Shell {
     app: App,
-    proxy: EventLoopProxy<UserEvent>,
+    proxy: EventLoopProxy<LoopEvent>,
     windows: HashMap<WindowId, WindowState>,
     initialized: bool,
+    driver: Option<Box<dyn AppDriver>>,
+    controlled_ids: HashMap<ShellWindowId, WindowId>,
+    next_controlled_id: u64,
+    controlled_had_window: bool,
+    controlled_stopped: bool,
 }
 
 impl Shell {
-    fn new(app: App, proxy: EventLoopProxy<UserEvent>) -> Self {
+    fn new(app: App, proxy: EventLoopProxy<LoopEvent>, driver: Option<Box<dyn AppDriver>>) -> Self {
         Self {
             app,
             proxy,
             windows: HashMap::new(),
             initialized: false,
+            driver,
+            controlled_ids: HashMap::new(),
+            next_controlled_id: 1,
+            controlled_had_window: false,
+            controlled_stopped: false,
+        }
+    }
+
+    fn create_controlled_window(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        title: &str,
+        size: Size,
+        theme: Theme,
+    ) -> Result<ShellWindowId, ShellError> {
+        if !size.width.is_finite()
+            || !size.height.is_finite()
+            || size.width <= 0.0
+            || size.height <= 0.0
+        {
+            return Err(ShellError::InvalidSize);
+        }
+        let spec = WindowSpec {
+            title: title.to_owned(),
+            size: (size.width as f64, size.height as f64),
+            factory: Box::new(|| Box::new(EmptyView)),
+        };
+        let state = WindowState::new(event_loop, spec, &theme, self.proxy.clone())
+            .map_err(|_| ShellError::WindowCreationFailed)?;
+        let native = state.window.id();
+        let id = ShellWindowId(self.next_controlled_id);
+        self.next_controlled_id = self
+            .next_controlled_id
+            .checked_add(1)
+            .ok_or(ShellError::WindowCreationFailed)?;
+        self.windows.insert(native, state);
+        self.controlled_ids.insert(id, native);
+        self.controlled_had_window = true;
+        Ok(id)
+    }
+
+    fn controlled_ui_mut(&mut self, id: ShellWindowId) -> Option<&mut grafikr_core::Ui> {
+        let native = *self.controlled_ids.get(&id)?;
+        self.windows.get_mut(&native).map(|state| &mut state.ui)
+    }
+
+    fn set_controlled_title(&mut self, id: ShellWindowId, title: &str) -> Result<(), ShellError> {
+        let native = *self
+            .controlled_ids
+            .get(&id)
+            .ok_or(ShellError::UnknownWindow)?;
+        let state = self
+            .windows
+            .get_mut(&native)
+            .ok_or(ShellError::UnknownWindow)?;
+        state.window.set_title(title);
+        state.ui.window_title = title.to_owned();
+        Ok(())
+    }
+
+    fn set_controlled_size(&mut self, id: ShellWindowId, size: Size) -> Result<(), ShellError> {
+        if !size.width.is_finite()
+            || !size.height.is_finite()
+            || size.width <= 0.0
+            || size.height <= 0.0
+        {
+            return Err(ShellError::InvalidSize);
+        }
+        let native = *self
+            .controlled_ids
+            .get(&id)
+            .ok_or(ShellError::UnknownWindow)?;
+        let state = self
+            .windows
+            .get_mut(&native)
+            .ok_or(ShellError::UnknownWindow)?;
+        let _ = state
+            .window
+            .request_inner_size(LogicalSize::new(size.width as f64, size.height as f64));
+        Ok(())
+    }
+
+    fn set_controlled_theme(&mut self, id: ShellWindowId, theme: Theme) -> Result<(), ShellError> {
+        let native = *self
+            .controlled_ids
+            .get(&id)
+            .ok_or(ShellError::UnknownWindow)?;
+        let state = self
+            .windows
+            .get_mut(&native)
+            .ok_or(ShellError::UnknownWindow)?;
+        state.ui.theme = theme;
+        state.ui.tree.mark_all_dirty(
+            grafikr_core::DirtyFlags::LAYOUT
+                | grafikr_core::DirtyFlags::PAINT
+                | grafikr_core::DirtyFlags::ACCESSIBILITY,
+        );
+        state.window.request_redraw();
+        Ok(())
+    }
+
+    fn close_controlled_window(&mut self, id: ShellWindowId) -> Result<(), ShellError> {
+        let native = self
+            .controlled_ids
+            .remove(&id)
+            .ok_or(ShellError::UnknownWindow)?;
+        self.windows
+            .remove(&native)
+            .ok_or(ShellError::UnknownWindow)?;
+        if let Some(driver) = &mut self.driver {
+            driver.closed(id);
+        }
+        if self.controlled_had_window && self.windows.is_empty() {
+            self.request_controlled_stop();
+        }
+        Ok(())
+    }
+
+    fn stop_controlled(&mut self) {
+        self.request_controlled_stop();
+    }
+
+    fn request_controlled_stop(&mut self) {
+        self.controlled_stopped = true;
+        let _ = self.proxy.send_event(LoopEvent::Wake);
+    }
+
+    fn dispatch_commands(&mut self, event_loop: &ActiveEventLoop) {
+        if self.controlled_stopped {
+            self.finish_controlled(event_loop);
+            return;
+        }
+        if let Some(mut driver) = self.driver.take() {
+            let mut cx = ShellCx {
+                inner: self,
+                event_loop,
+            };
+            driver.commands(&mut cx);
+            self.driver = Some(driver);
+        }
+        if self.controlled_stopped || (self.controlled_had_window && self.windows.is_empty()) {
+            self.finish_controlled(event_loop);
+        }
+    }
+
+    fn finish_controlled(&mut self, event_loop: &ActiveEventLoop) {
+        if !self.controlled_stopped {
+            self.controlled_stopped = true;
+        }
+        if !self.controlled_stopped {
+            return;
+        }
+        if let Some(driver) = &mut self.driver {
+            driver.stopping();
+        }
+        self.driver = None;
+        event_loop.exit();
+    }
+
+    fn notify_closed(&mut self, native: WindowId) {
+        if let Some((id, _)) = self
+            .controlled_ids
+            .iter()
+            .find(|(_, window)| **window == native)
+            .map(|(id, window)| (*id, *window))
+        {
+            self.controlled_ids.remove(&id);
+            if let Some(driver) = &mut self.driver {
+                driver.closed(id);
+            }
+        }
+        if self.controlled_had_window && self.windows.is_empty() {
+            self.request_controlled_stop();
         }
     }
 }
 
-impl ApplicationHandler<UserEvent> for Shell {
+struct EmptyView;
+
+impl View for EmptyView {
+    fn mount(&self, cx: &mut grafikr_core::MountCx) -> grafikr_core::NodeId {
+        cx.add_node(Style::default())
+    }
+}
+
+impl ApplicationHandler<LoopEvent> for Shell {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.initialized {
             return;
@@ -410,6 +620,13 @@ impl ApplicationHandler<UserEvent> for Shell {
                 }
             }
         }
+        if let Some(mut driver) = self.driver.take() {
+            let proxy = self.proxy.clone();
+            driver.ready(Arc::new(move || {
+                let _ = proxy.send_event(LoopEvent::Wake);
+            }));
+            self.driver = Some(driver);
+        }
     }
 
     fn window_event(
@@ -420,7 +637,8 @@ impl ApplicationHandler<UserEvent> for Shell {
     ) {
         if matches!(event, WindowEvent::CloseRequested | WindowEvent::Destroyed) {
             self.windows.remove(&window_id);
-            if self.windows.is_empty() {
+            self.notify_closed(window_id);
+            if self.driver.is_none() && self.windows.is_empty() {
                 event_loop.exit();
             }
             return;
@@ -510,37 +728,46 @@ impl ApplicationHandler<UserEvent> for Shell {
             }
             _ => {}
         }
+        self.dispatch_commands(event_loop);
     }
 
-    fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: UserEvent) {
+    fn user_event(&mut self, event_loop: &ActiveEventLoop, event: LoopEvent) {
         match event {
-            UserEvent::AccessKit(event) => {
-                let Some(state) = self.windows.get_mut(&event.window_id) else {
-                    return;
-                };
-                match event.window_event {
-                    accesskit_winit::WindowEvent::InitialTreeRequested => state.update_a11y(true),
-                    accesskit_winit::WindowEvent::ActionRequested(request) => {
-                        if state.ui.handle_a11y_action(&request) {
-                            let outcome = state.ui.current_outcome();
-                            state.apply_outcome(outcome);
-                            state.update_a11y(false);
-                            state.window.request_redraw();
+            LoopEvent::Wake => self.dispatch_commands(event_loop),
+            LoopEvent::User(event) => match event {
+                UserEvent::AccessKit(event) => {
+                    let Some(state) = self.windows.get_mut(&event.window_id) else {
+                        return;
+                    };
+                    match event.window_event {
+                        accesskit_winit::WindowEvent::InitialTreeRequested => {
+                            state.update_a11y(true)
                         }
+                        accesskit_winit::WindowEvent::ActionRequested(request) => {
+                            if state.ui.handle_a11y_action(&request) {
+                                let outcome = state.ui.current_outcome();
+                                state.apply_outcome(outcome);
+                                state.update_a11y(false);
+                                state.window.request_redraw();
+                            }
+                        }
+                        accesskit_winit::WindowEvent::AccessibilityDeactivated => {}
                     }
-                    accesskit_winit::WindowEvent::AccessibilityDeactivated => {}
                 }
-            }
-            UserEvent::DeviceLost => {
-                for state in self.windows.values_mut() {
-                    state.recover_gpu();
+                UserEvent::DeviceLost => {
+                    for state in self.windows.values_mut() {
+                        state.recover_gpu();
+                    }
                 }
-            }
+            },
         }
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        let mut animating = false;
+        let mut animating = self
+            .driver
+            .as_ref()
+            .is_some_and(|driver| driver.is_animating());
         for state in self.windows.values() {
             if state.ui.runtime.needs_frame() {
                 state.window.request_redraw();
@@ -556,17 +783,28 @@ impl ApplicationHandler<UserEvent> for Shell {
         });
     }
 
-    fn new_events(&mut self, _event_loop: &ActiveEventLoop, cause: StartCause) {
+    fn new_events(&mut self, event_loop: &ActiveEventLoop, cause: StartCause) {
         if matches!(cause, StartCause::ResumeTimeReached { .. }) {
             for state in self.windows.values() {
                 if state.ui.runtime.is_animating() {
                     state.window.request_redraw();
                 }
             }
+            if self
+                .driver
+                .as_ref()
+                .is_some_and(|driver| driver.is_animating())
+            {
+                self.dispatch_commands(event_loop);
+            }
         }
     }
 
     fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
+        if let Some(driver) = &mut self.driver {
+            driver.stopping();
+        }
+        self.driver = None;
         self.windows.clear();
     }
 }

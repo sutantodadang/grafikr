@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><PackageId>Grafikr.Client</PackageId><Version>1.1.0</Version><Authors>Grafikr</Authors><Description>Desktop UI client for Grafikr</Description><PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression><PackageReadmeFile>README.md</PackageReadmeFile></PropertyGroup>
+  <ItemGroup><None Include="../README.md" Pack="true" PackagePath="\" /></ItemGroup>
+  <ItemGroup><None Include="Grafikr.Client.targets" Pack="true" PackagePath="buildTransitive/Grafikr.Client.targets" /></ItemGroup>
+  <ItemGroup Condition="'$(GrafikrRuntimeBundle)' != '' and '$(RuntimeIdentifier)' != ''">
+    <None Include="$(GrafikrRuntimeBundle)\**\*" Exclude="$(GrafikrRuntimeBundle)\LICENSE;$(GrafikrRuntimeBundle)\share\licenses\grafikr\cjson\LICENSE" Pack="true" PackagePath="runtimes/$(RuntimeIdentifier)/native/" />
+    <None Include="$(GrafikrRuntimeBundle)\LICENSE" Pack="true" PackagePath="runtimes/$(RuntimeIdentifier)/native/" />
+    <None Include="$(GrafikrRuntimeBundle)\share\licenses\grafikr\cjson\LICENSE" Pack="true" PackagePath="runtimes/$(RuntimeIdentifier)/native/share/licenses/grafikr/cjson/" />
+  </ItemGroup>
+</Project>

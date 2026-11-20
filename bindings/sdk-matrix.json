@@ -1,0 +1,4241 @@
+{
+  "protocol_version": {
+    "major": 1,
+    "minor": 0
+  },
+  "evidence": {
+    "directory": ".artifacts/bindings",
+    "format": "grafikr-bindings-evidence-v1",
+    "schema_version": 1
+  },
+  "coverage_requirements": {
+    "cases_file": "bindings/protocol/v1/fixtures/sdk-cases.json",
+    "widgets_file": "bindings/protocol/v1/widgets.json"
+  },
+  "sdks": [
+    {
+      "name": "c",
+      "ecosystem": "C",
+      "consumer_language": "C",
+      "runtime_floor": "C11",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "cmake-ctest",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.run_cmake_binding_tests",
+                "--project",
+                "c",
+                "--runtime",
+                "{runtime_dir}"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/c/tests/abi.c",
+            "bindings/c/tests/client.c",
+            "bindings/c/tests/value.c",
+            "bindings/c/tests/cjson_strict.c",
+            "bindings/c/tests/native_scenario.c",
+            "bindings/c/tests/collection_provider_scenario.c",
+            "bindings/c/src/client.c",
+            "bindings/c/src/value.c",
+            "bindings/c/examples/common.h",
+            "bindings/c/examples/counter_form.c",
+            "bindings/c/examples/dashboard.c",
+            "bindings/c/examples/multi_window.c",
+            "bindings/c/CMakeLists.txt",
+            "bindings/c/vendor/cjson/README.md",
+            "bindings/c/vendor/cjson/LICENSE",
+            "bindings/c/vendor/cjson/cJSON.c",
+            "bindings/c/vendor/cjson/cJSON.h",
+            "scripts/run_cmake_binding_tests.py"
+          ]
+        },
+        "contract": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "c-native-parity-contract",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.run_cmake_binding_tests",
+                "--project",
+                "c",
+                "--runtime",
+                "{runtime_dir}",
+                "--native-contract",
+                "bindings/protocol/v1/fixtures/parity.jsonl",
+                "--native-widget-inventory"
+              ],
+              "timeout_seconds": 1800
+            }
+          ],
+          "helper_paths": [
+            "scripts/run_cmake_binding_tests.py",
+            "scripts/tests/test_run_cmake_binding_tests.py",
+            "bindings/protocol/v1/fixtures/parity.jsonl",
+            "bindings/c/tests/native_scenario.c",
+            "bindings/c/tests/collection_provider_scenario.c",
+            "bindings/c/tests/client.c",
+            "bindings/c/tests/abi.c",
+            "bindings/cpp/tests/client.cpp",
+            "bindings/cpp/tests/collection_provider_scenario.cpp",
+            "bindings/c/CMakeLists.txt",
+            "bindings/cpp/CMakeLists.txt",
+            "bindings/c/include/grafikr.h",
+            "bindings/c/include/grafikr_client.h",
+            "bindings/protocol/v1/widgets.json",
+            "bindings/c/tests/mock_ffi.h",
+            "bindings/c/tests/mock_ffi.c",
+            "bindings/c/tests/transport_contract.c"
+          ],
+          "requires_fixture_host": false,
+          "coverage": {
+            "cases": [
+              "values.i64_boundaries",
+              "transport.utf8_newline_100k",
+              "values.non_finite_rejected",
+              "transport.queue_limits",
+              "callbacks.nested_request",
+              "responses.out_of_order",
+              "events.subscribe_early_delivery",
+              "events.unsubscribe_stale",
+              "transport.eof_pending_256",
+              "callbacks.blocked_handler_bound"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-cmake-consumer",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.run_cmake_binding_tests",
+                "--project",
+                "c",
+                "--runtime",
+                "{runtime_dir}",
+                "--installed-consumer-only"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "scripts/run_cmake_binding_tests.py"
+          ],
+          "coverage": {
+            "cases": [],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "cpp",
+      "ecosystem": "C++",
+      "consumer_language": "C++",
+      "runtime_floor": "C++17",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "cmake-ctest",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.run_cmake_binding_tests",
+                "--project",
+                "cpp",
+                "--runtime",
+                "{runtime_dir}"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/cpp/tests/client.cpp",
+            "bindings/cpp/tests/collection_provider_scenario.cpp",
+            "bindings/cpp/include/grafikr.hpp",
+            "bindings/cpp/examples/common.hpp",
+            "bindings/cpp/examples/counter_form.cpp",
+            "bindings/cpp/examples/dashboard.cpp",
+            "bindings/cpp/examples/multi_window.cpp",
+            "bindings/cpp/CMakeLists.txt",
+            "bindings/c/tests/client.c",
+            "bindings/c/tests/value.c",
+            "bindings/c/src/client.c",
+            "bindings/c/src/value.c",
+            "bindings/c/vendor/cjson/LICENSE",
+            "bindings/c/vendor/cjson/cJSON.c",
+            "scripts/run_cmake_binding_tests.py"
+          ]
+        },
+        "contract": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "cpp-native-parity-contract",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.run_cmake_binding_tests",
+                "--project",
+                "cpp",
+                "--runtime",
+                "{runtime_dir}",
+                "--native-contract",
+                "bindings/protocol/v1/fixtures/parity.jsonl",
+                "--native-widget-inventory"
+              ],
+              "timeout_seconds": 1800
+            }
+          ],
+          "helper_paths": [
+            "scripts/run_cmake_binding_tests.py",
+            "scripts/tests/test_run_cmake_binding_tests.py",
+            "bindings/protocol/v1/fixtures/parity.jsonl",
+            "bindings/c/tests/native_scenario.c",
+            "bindings/c/tests/collection_provider_scenario.c",
+            "bindings/c/tests/client.c",
+            "bindings/c/tests/abi.c",
+            "bindings/cpp/tests/client.cpp",
+            "bindings/cpp/tests/collection_provider_scenario.cpp",
+            "bindings/c/CMakeLists.txt",
+            "bindings/cpp/CMakeLists.txt",
+            "bindings/c/include/grafikr.h",
+            "bindings/c/include/grafikr_client.h",
+            "bindings/cpp/include/grafikr.hpp",
+            "bindings/protocol/v1/widgets.json",
+            "bindings/c/tests/mock_ffi.h",
+            "bindings/c/tests/mock_ffi.c",
+            "bindings/c/tests/transport_contract.c",
+            "bindings/cpp/tests/transport_contract.cpp"
+          ],
+          "requires_fixture_host": false,
+          "coverage": {
+            "cases": [
+              "values.i64_boundaries",
+              "transport.utf8_newline_100k",
+              "values.non_finite_rejected",
+              "transport.queue_limits",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "responses.out_of_order",
+              "events.subscribe_early_delivery",
+              "events.unsubscribe_stale",
+              "transport.eof_pending_256",
+              "callbacks.blocked_handler_bound"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-cmake-consumer",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.run_cmake_binding_tests",
+                "--project",
+                "cpp",
+                "--runtime",
+                "{runtime_dir}",
+                "--installed-consumer-only"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "scripts/run_cmake_binding_tests.py"
+          ],
+          "coverage": {
+            "cases": [],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "python",
+      "ecosystem": "Python",
+      "consumer_language": "Python",
+      "runtime_floor": "3.12",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "fixture-host",
+              "argv": [
+                "cargo",
+                "build",
+                "-p",
+                "grafikr-conformance",
+                "--bin",
+                "fixture-host"
+              ]
+            },
+            {
+              "name": "unittest",
+              "argv": [
+                "python",
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "bindings/python/tests",
+                "-v"
+              ],
+              "env": {
+                "PYTHONPATH": "bindings/python/src"
+              }
+            },
+            {
+              "name": "installed-wheel",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_python_wheel",
+                "--bundle",
+                "{runtime_dir}"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/python/tests/test_client.py",
+            "bindings/python/tests/test_runtime.py",
+            "bindings/python/src/grafikr/runtime.py",
+            "bindings/python/pyproject.toml",
+            "scripts/package_python.py",
+            "scripts/verify_python_wheel.py",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ],
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "callbacks.blocked_handler_bound",
+              "lifecycle.close_timeout_sentinel",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "runtime.bundle_target_hash"
+            ],
+            "widgets": []
+          }
+        },
+        "contract": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "runtime-queue-limits",
+              "argv": [
+                "cargo",
+                "test",
+                "-p",
+                "grafikr-bridge",
+                "--test",
+                "queues",
+                "queue_enforces_count_and_bytes_and_stop_wakes_reader"
+              ]
+            },
+            {
+              "name": "python-client-contract",
+              "argv": [
+                "python",
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "bindings/python/tests",
+                "-p",
+                "test_client.py",
+                "-v"
+              ],
+              "env": {
+                "PYTHONPATH": "bindings/python/src"
+              }
+            },
+            {
+              "name": "widget-inventory",
+              "argv": [
+                "python",
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "bindings/python/tests",
+                "-p",
+                "test_client.py",
+                "-k",
+                "creates_every_shared_widget_and_receives_declared_events",
+                "-v"
+              ],
+              "env": {
+                "PYTHONPATH": "bindings/python/src",
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1",
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/python/tests/test_client.py",
+            "bindings/protocol/v1/widgets.json",
+            "crates/grafikr-bridge/tests/queues.rs"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.eof_pending_256",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound",
+              "transport.queue_limits"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-wheel-scenarios",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_python_wheel",
+                "--bundle",
+                "{runtime_dir}",
+                "--fixture-scenarios"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "scripts/verify_python_wheel.py",
+            "bindings/python/src/grafikr/client.py",
+            "bindings/python/src/grafikr/runtime.py"
+          ],
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "javascript",
+      "ecosystem": "Node.js",
+      "consumer_language": "JavaScript",
+      "runtime_floor": "Node.js 24",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "typescript-build",
+              "argv": [
+                "node",
+                "bindings/node/node_modules/typescript/bin/tsc",
+                "-p",
+                "bindings/node/tsconfig.json"
+              ]
+            },
+            {
+              "name": "node-test",
+              "argv": [
+                "node",
+                "--test",
+                "bindings/node/test/client.test.mjs",
+                "bindings/node/test/runtime.test.mjs"
+              ]
+            },
+            {
+              "name": "optional-runtime-dependencies",
+              "argv": [
+                "python",
+                "-m",
+                "unittest",
+                "scripts.tests.test_node_optional_dependencies",
+                "-v"
+              ]
+            },
+            {
+              "name": "offline-javascript-typescript-consumers",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_node_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--out",
+                "target/packages/node-sdk"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/node/test/client.test.mjs",
+            "bindings/node/test/runtime.test.mjs",
+            "bindings/node/src/transport-worker.ts",
+            "bindings/node/src/runtime.ts",
+            "scripts/verify_node_package.py",
+            "scripts/tests/test_node_optional_dependencies.py",
+            "bindings/node/test/consumer-types.mts"
+          ]
+        },
+        "contract": {
+          "cwd": "bindings/node",
+          "checks": [
+            {
+              "name": "node-typescript-build",
+              "argv": [
+                "node",
+                "node_modules/typescript/bin/tsc",
+                "-p",
+                "tsconfig.json"
+              ]
+            },
+            {
+              "name": "node-contract-tests",
+              "argv": [
+                "node",
+                "--test",
+                "test/client.test.mjs"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1",
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_UNSUBSCRIBE_EVENT": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/node/test/client.test.mjs",
+            "bindings/node/test/fake-host.mjs",
+            "bindings/protocol/v1/widgets.json",
+            "bindings/node/src/client.ts",
+            "bindings/node/src/transport-worker.ts",
+            "bindings/node/test/consumer-types.mts"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.eof_pending_256",
+              "transport.queue_limits",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "offline-npm-consumer",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_node_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--fixture-scenarios"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "scripts/package_node_runtime.py",
+            "scripts/verify_node_package.py"
+          ],
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "typescript",
+      "ecosystem": "Node.js",
+      "consumer_language": "TypeScript",
+      "runtime_floor": "Node.js 24 / TypeScript 5.8",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "typescript-build",
+              "argv": [
+                "node",
+                "bindings/node/node_modules/typescript/bin/tsc",
+                "-p",
+                "bindings/node/tsconfig.json"
+              ]
+            },
+            {
+              "name": "typescript-consumer-types",
+              "argv": [
+                "node",
+                "bindings/node/node_modules/typescript/bin/tsc",
+                "--noEmit",
+                "--strict",
+                "--target",
+                "ES2022",
+                "--module",
+                "NodeNext",
+                "--moduleResolution",
+                "NodeNext",
+                "bindings/node/test/consumer-types.mts"
+              ]
+            },
+            {
+              "name": "offline-typescript-package-consumer",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_node_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--out",
+                "target/packages/node-sdk"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/node/src/index.ts",
+            "bindings/node/test/consumer-types.mts",
+            "scripts/verify_node_package.py"
+          ]
+        },
+        "contract": {
+          "cwd": "bindings/node",
+          "checks": [
+            {
+              "name": "node-typescript-build",
+              "argv": [
+                "node",
+                "node_modules/typescript/bin/tsc",
+                "-p",
+                "tsconfig.json"
+              ]
+            },
+            {
+              "name": "node-contract-tests",
+              "argv": [
+                "node",
+                "--test",
+                "test/client.test.mjs"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1",
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_UNSUBSCRIBE_EVENT": "1"
+              }
+            },
+            {
+              "name": "typescript-consumer-types",
+              "argv": [
+                "node",
+                "node_modules/typescript/bin/tsc",
+                "--noEmit",
+                "--strict",
+                "--target",
+                "ES2022",
+                "--module",
+                "NodeNext",
+                "--moduleResolution",
+                "NodeNext",
+                "test/consumer-types.mts"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/node/test/client.test.mjs",
+            "bindings/node/test/fake-host.mjs",
+            "bindings/protocol/v1/widgets.json",
+            "bindings/node/src/client.ts",
+            "bindings/node/src/transport-worker.ts",
+            "bindings/node/test/consumer-types.mts"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.eof_pending_256",
+              "transport.queue_limits",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "offline-npm-typescript-consumer",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_node_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--fixture-scenarios"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "scripts/package_node_runtime.py",
+            "scripts/verify_node_package.py"
+          ],
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "dotnet",
+      "ecosystem": ".NET",
+      "consumer_language": "C#",
+      "runtime_floor": ".NET 10",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "fixture-host",
+              "argv": [
+                "cargo",
+                "build",
+                "-p",
+                "grafikr-conformance",
+                "--bin",
+                "fixture-host"
+              ]
+            },
+            {
+              "name": "dotnet-harness",
+              "argv": [
+                "dotnet",
+                "run",
+                "--project",
+                "bindings/dotnet/Grafikr.Client.Tests/Grafikr.Client.Tests.csproj",
+                "-c",
+                "Release"
+              ]
+            },
+            {
+              "name": "nuget-consumer-smoke",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_dotnet_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--out",
+                "target/packages/dotnet"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/dotnet/Grafikr.Client.Tests/Program.cs",
+            "bindings/dotnet/Grafikr.Client/Grafikr.Client.csproj",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs",
+            "scripts/verify_dotnet_package.py"
+          ]
+        },
+        "contract": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "dotnet-protocol-and-widget-contract",
+              "argv": [
+                "dotnet",
+                "run",
+                "--project",
+                "bindings/dotnet/Grafikr.Client.Tests/Grafikr.Client.Tests.csproj",
+                "-c",
+                "Release"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/dotnet/Grafikr.Client.Tests/Program.cs",
+            "bindings/dotnet/Grafikr.Client/Client.cs",
+            "bindings/protocol/v1/widgets.json",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.eof_pending_256",
+              "transport.queue_limits",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-nuget-scenarios",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_dotnet_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--fixture-scenarios"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "scripts/verify_dotnet_package.py",
+            "bindings/dotnet/Grafikr.Client/Client.cs",
+            "bindings/dotnet/Grafikr.Client/Runtime.cs"
+          ],
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "go",
+      "ecosystem": "Go",
+      "consumer_language": "Go",
+      "runtime_floor": "Go 1.26",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "fixture-host",
+              "argv": [
+                "cargo",
+                "build",
+                "-p",
+                "grafikr-conformance",
+                "--bin",
+                "fixture-host"
+              ]
+            },
+            {
+              "name": "go-test",
+              "argv": [
+                "go",
+                "-C",
+                "bindings/go",
+                "test",
+                "./..."
+              ]
+            },
+            {
+              "name": "go-vet",
+              "argv": [
+                "go",
+                "-C",
+                "bindings/go",
+                "vet",
+                "./..."
+              ]
+            },
+            {
+              "name": "offline-module-consumer",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_go_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--out",
+                "target/packages/go"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/go/client.go",
+            "bindings/go/runtime.go",
+            "bindings/go/client_test.go",
+            "bindings/go/collection_internal_test.go",
+            "bindings/go/transport_internal_test.go",
+            "bindings/go/process_windows.go",
+            "bindings/go/process_unix.go",
+            "bindings/go/cmd/grafikr-runtime/main.go",
+            "scripts/verify_go_package.py",
+            "scripts/tests/test_go_package.py",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ]
+        },
+        "contract": {
+          "cwd": "bindings/go",
+          "checks": [
+            {
+              "name": "go-contract-tests",
+              "argv": [
+                "go",
+                "test",
+                "./..."
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/go/client.go",
+            "bindings/go/client_test.go",
+            "bindings/go/transport_internal_test.go",
+            "bindings/go/collection_internal_test.go",
+            "bindings/protocol/v1/widgets.json",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.eof_pending_256",
+              "transport.queue_limits",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-go-module-scenarios",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_go_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--fixture-scenarios"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "scripts/verify_go_package.py",
+            "bindings/go/client.go",
+            "bindings/go/runtime.go"
+          ],
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "java",
+      "ecosystem": "JVM",
+      "consumer_language": "Java",
+      "runtime_floor": "Java 21",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "fixture-host",
+              "argv": [
+                "cargo",
+                "build",
+                "-p",
+                "grafikr-conformance",
+                "--bin",
+                "fixture-host"
+              ]
+            },
+            {
+              "name": "gradle-test",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}"
+              ]
+            },
+            {
+              "name": "offline-maven-consumers",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_jvm_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--out",
+                "target/packages/jvm-maven"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+            "bindings/jvm/gradle/wrapper/gradle-wrapper.properties",
+            "bindings/jvm/src/main/java/dev/grafikr/App.java",
+            "bindings/jvm/src/test/java/dev/grafikr/ContractTest.java",
+            "scripts/verify_jvm_package.py",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ]
+        },
+        "contract": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "jvm-protocol-and-widget-contract",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.createsEverySharedWidgetAndReceivesItsDeclaredEvents",
+                "--tests",
+                "dev.grafikr.ContractTest.nestedCallbackRequestCompletesAndHandlerErrorsReachHook",
+                "--tests",
+                "dev.grafikr.ContractTest.unsubscribeSuppressesAnEventSentBeforeItsResponse",
+                "--tests",
+                "dev.grafikr.ContractTest.stateRoundTripsBothSigned64BitBoundaries",
+                "--tests",
+                "dev.grafikr.ContractTest.rejectsThe257thOutstandingRequestBeforeWriting",
+                "--tests",
+                "dev.grafikr.ContractTest.rejectsNonFiniteStateBeforeSending",
+                "--tests",
+                "dev.grafikr.ContractTest.subscriptionReceivesAnEventBeforeItsResponse",
+                "--tests",
+                "dev.grafikr.ContractTest.collectionProviderBoundsRequestsAndCloseWakesReaders"
+              ],
+              "timeout_seconds": 300,
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1",
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1",
+                "GRAFIKR_FIXTURE_UNSUBSCRIBE_EVENT": "1",
+                "GRAFIKR_FIXTURE_DELAY_UNSUBSCRIBE_RESPONSE_MS": "150"
+              }
+            },
+            {
+              "name": "jvm-out-of-order-responses",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.correlatesConcurrentOutOfOrderResponses"
+              ],
+              "timeout_seconds": 300,
+              "env": {
+                "GRAFIKR_FIXTURE_REVERSE_RESPONSES": "1"
+              }
+            },
+            {
+              "name": "jvm-pending-eof",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.eofCompletesAll256OutstandingRequests"
+              ],
+              "timeout_seconds": 30,
+              "env": {
+                "GRAFIKR_FIXTURE_HOLD_RESPONSES": "1",
+                "GRAFIKR_FIXTURE_EXIT_AFTER_HELLO_MS": "2000"
+              }
+            },
+            {
+              "name": "jvm-blocked-handler-bound",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.blockedEventHandlerCannotExhaustReaderWithoutClosingSession"
+              ],
+              "timeout_seconds": 30,
+              "env": {
+                "GRAFIKR_FIXTURE_EVENT_BYTES_OVERFLOW": "1"
+              }
+            },
+            {
+              "name": "jvm-close-sentinel",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.closeTimeoutLeavesUnrelatedSentinelAlive"
+              ],
+              "timeout_seconds": 20,
+              "env": {
+                "GRAFIKR_FIXTURE_DELAY_EXIT_MS": "6000"
+              }
+            },
+            {
+              "name": "jvm-command-byte-quota",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.requestQueueRejectsFramesAboveSixteenMiB"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_HOLD_ALL_RESPONSES": "1"
+              },
+              "timeout_seconds": 60
+            }
+          ],
+          "helper_paths": [
+            "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+            "bindings/jvm/src/main/java/dev/grafikr/App.java",
+            "bindings/jvm/src/test/java/dev/grafikr/ContractTest.java",
+            "bindings/jvm/src/test/kotlin/dev/grafikr/KotlinContractTest.kt",
+            "bindings/protocol/v1/widgets.json",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.eof_pending_256",
+              "transport.queue_limits",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-java-maven-scenarios",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_jvm_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--fixture-scenarios"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "scripts/verify_jvm_package.py",
+            "bindings/jvm/src/main/java/dev/grafikr/App.java",
+            "bindings/jvm/src/main/java/dev/grafikr/CollectionProvider.java"
+          ],
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "kotlin",
+      "ecosystem": "JVM",
+      "consumer_language": "Kotlin",
+      "runtime_floor": "Kotlin 2.0 / Java 21",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "kotlin-compile",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "compileKotlin",
+                "--no-daemon"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+            "bindings/jvm/src/main/kotlin/dev/grafikr/CounterForm.kt"
+          ]
+        },
+        "contract": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "jvm-protocol-and-widget-contract",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.createsEverySharedWidgetAndReceivesItsDeclaredEvents",
+                "--tests",
+                "dev.grafikr.ContractTest.nestedCallbackRequestCompletesAndHandlerErrorsReachHook",
+                "--tests",
+                "dev.grafikr.ContractTest.unsubscribeSuppressesAnEventSentBeforeItsResponse",
+                "--tests",
+                "dev.grafikr.ContractTest.stateRoundTripsBothSigned64BitBoundaries",
+                "--tests",
+                "dev.grafikr.ContractTest.rejectsThe257thOutstandingRequestBeforeWriting",
+                "--tests",
+                "dev.grafikr.ContractTest.rejectsNonFiniteStateBeforeSending",
+                "--tests",
+                "dev.grafikr.ContractTest.subscriptionReceivesAnEventBeforeItsResponse",
+                "--tests",
+                "dev.grafikr.ContractTest.collectionProviderBoundsRequestsAndCloseWakesReaders"
+              ],
+              "timeout_seconds": 300,
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1",
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1",
+                "GRAFIKR_FIXTURE_UNSUBSCRIBE_EVENT": "1",
+                "GRAFIKR_FIXTURE_DELAY_UNSUBSCRIBE_RESPONSE_MS": "150"
+              }
+            },
+            {
+              "name": "jvm-out-of-order-responses",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.correlatesConcurrentOutOfOrderResponses"
+              ],
+              "timeout_seconds": 300,
+              "env": {
+                "GRAFIKR_FIXTURE_REVERSE_RESPONSES": "1"
+              }
+            },
+            {
+              "name": "jvm-pending-eof",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.eofCompletesAll256OutstandingRequests"
+              ],
+              "timeout_seconds": 30,
+              "env": {
+                "GRAFIKR_FIXTURE_HOLD_RESPONSES": "1",
+                "GRAFIKR_FIXTURE_EXIT_AFTER_HELLO_MS": "2000"
+              }
+            },
+            {
+              "name": "jvm-blocked-handler-bound",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.blockedEventHandlerCannotExhaustReaderWithoutClosingSession"
+              ],
+              "timeout_seconds": 30,
+              "env": {
+                "GRAFIKR_FIXTURE_EVENT_BYTES_OVERFLOW": "1"
+              }
+            },
+            {
+              "name": "jvm-close-sentinel",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.closeTimeoutLeavesUnrelatedSentinelAlive"
+              ],
+              "timeout_seconds": 20,
+              "env": {
+                "GRAFIKR_FIXTURE_DELAY_EXIT_MS": "6000"
+              }
+            },
+            {
+              "name": "kotlin-consumer-contract",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.KotlinContractTest"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1"
+              }
+            },
+            {
+              "name": "jvm-command-byte-quota",
+              "argv": [
+                "java",
+                "-classpath",
+                "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+                "org.gradle.wrapper.GradleWrapperMain",
+                "-p",
+                "bindings/jvm",
+                "test",
+                "--no-daemon",
+                "-PgrafikrRuntimeBundle={runtime_dir}",
+                "-PgrafikrRuntimeClassifier={runtime_classifier}",
+                "--tests",
+                "dev.grafikr.ContractTest.requestQueueRejectsFramesAboveSixteenMiB"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_HOLD_ALL_RESPONSES": "1"
+              },
+              "timeout_seconds": 60
+            }
+          ],
+          "helper_paths": [
+            "bindings/jvm/gradle/wrapper/gradle-wrapper.jar",
+            "bindings/jvm/src/main/java/dev/grafikr/App.java",
+            "bindings/jvm/src/test/java/dev/grafikr/ContractTest.java",
+            "bindings/jvm/src/test/kotlin/dev/grafikr/KotlinContractTest.kt",
+            "bindings/protocol/v1/widgets.json",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.eof_pending_256",
+              "transport.queue_limits",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-kotlin-maven-scenarios",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_jvm_package",
+                "--bundle",
+                "{runtime_dir}",
+                "--fixture-scenarios"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "scripts/verify_jvm_package.py",
+            "bindings/jvm/src/main/java/dev/grafikr/App.java",
+            "bindings/jvm/src/main/java/dev/grafikr/CollectionProvider.java"
+          ],
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "swift",
+      "ecosystem": "Swift",
+      "consumer_language": "Swift",
+      "runtime_floor": "Swift 6.4",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": "bindings/swift",
+          "checks": [
+            {
+              "name": "fixture-host",
+              "argv": [
+                "cargo",
+                "build",
+                "--manifest-path",
+                "../../Cargo.toml",
+                "-p",
+                "grafikr-conformance",
+                "--bin",
+                "fixture-host"
+              ]
+            },
+            {
+              "name": "swift-runtime-cli-build",
+              "argv": [
+                "swift",
+                "build",
+                "--product",
+                "grafikr-runtime",
+                "--scratch-path",
+                "../../target/swift-sdk"
+              ]
+            },
+            {
+              "name": "swift-test",
+              "argv": [
+                "swift",
+                "test",
+                "--scratch-path",
+                "../../target/swift-sdk",
+                "-Xswiftc",
+                "-strict-concurrency=complete"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/swift/Tests/GrafikrTests/ProtocolTests.swift",
+            "bindings/swift/Tests/GrafikrTests/RuntimeTests.swift",
+            "bindings/swift/Sources/Grafikr/Runtime.swift",
+            "bindings/swift/Sources/grafikr-runtime/main.swift",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ]
+        },
+        "contract": {
+          "cwd": "bindings/swift",
+          "checks": [
+            {
+              "name": "swift-callback-queue-contract",
+              "argv": [
+                "swift",
+                "test",
+                "--scratch-path",
+                "../../target/swift-sdk",
+                "--filter",
+                "ProtocolTests"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/swift/Tests/GrafikrTests/ProtocolTests.swift",
+            "bindings/swift/Sources/Grafikr/App.swift",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs",
+            "bindings/swift/Tests/GrafikrTests/RuntimeTests.swift",
+            "bindings/swift/Sources/Grafikr/Runtime.swift",
+            "bindings/swift/Sources/grafikr-runtime/main.swift"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.eof_pending_256",
+              "transport.queue_limits",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-swift-package-scenarios",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_swift_package",
+                "--package-root",
+                "{package_root}"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "requires_fixture_host": true,
+          "requires_package_root": true,
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          },
+          "helper_paths": [
+            "scripts/verify_swift_package.py",
+            "scripts/package_bindings.py",
+            "bindings/swift/Sources/Grafikr/App.swift",
+            "bindings/swift/Package.swift"
+          ]
+        }
+      }
+    },
+    {
+      "name": "dart",
+      "ecosystem": "Dart VM",
+      "consumer_language": "Dart",
+      "runtime_floor": "Dart 3.8",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": "bindings/dart",
+          "checks": [
+            {
+              "name": "fixture-host",
+              "argv": [
+                "cargo",
+                "build",
+                "--manifest-path",
+                "../../Cargo.toml",
+                "-p",
+                "grafikr-conformance",
+                "--bin",
+                "fixture-host"
+              ]
+            },
+            {
+              "name": "dart-test",
+              "argv": [
+                "dart",
+                "test"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1",
+                "GRAFIKR_FIXTURE_HOLD_RESPONSES": "1",
+                "GRAFIKR_FIXTURE_EVENT_BURST": "512",
+                "GRAFIKR_FIXTURE_EVENT_MARKER": "../../target/dart-reader-progress.marker",
+                "GRAFIKR_FIXTURE_EVENT_COUNT_OVERFLOW": "1",
+                "GRAFIKR_FIXTURE_EVENT_BYTES_OVERFLOW": "1",
+                "GRAFIKR_FIXTURE_UNSUBSCRIBE_EVENT": "1"
+              }
+            },
+            {
+              "name": "widget-inventory",
+              "argv": [
+                "dart",
+                "test",
+                "--plain-name",
+                "creates every shared widget and receives its declared events"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1",
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1"
+              }
+            },
+            {
+              "name": "request-correlation",
+              "argv": [
+                "dart",
+                "test",
+                "--plain-name",
+                "correlates out-of-order responses by request id"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_REVERSE_RESPONSES": "1",
+                "GRAFIKR_FIXTURE_RESPONSE_MARKER": "../../target/dart-reverse-response.marker"
+              }
+            },
+            {
+              "name": "shutdown-timeout",
+              "argv": [
+                "dart",
+                "test",
+                "--plain-name",
+                "shutdown timeout kills only the Grafikr child process"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_DELAY_EXIT_MS": "6000",
+                "GRAFIKR_FIXTURE_EXIT_MARKER": "../../target/dart-shutdown-marker"
+              }
+            },
+            {
+              "name": "shutdown-response-timeout",
+              "argv": [
+                "dart",
+                "test",
+                "--plain-name",
+                "shutdown deadline includes an unresponsive host"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_PAUSE_AFTER_HELLO_MS": "8000",
+                "GRAFIKR_FIXTURE_PAUSE_MARKER": "../../target/dart-pause-marker"
+              }
+            },
+            {
+              "name": "command-queue-byte-limit",
+              "argv": [
+                "dart",
+                "test",
+                "--plain-name",
+                "bounds queued command bytes while the host is unresponsive"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_PAUSE_AFTER_HELLO_MS": "8000",
+                "GRAFIKR_FIXTURE_PAUSE_MARKER": "../../target/dart-pause-marker"
+              }
+            },
+            {
+              "name": "package-consumer",
+              "argv": [
+                "python",
+                "../../scripts/verify_dart_package.py"
+              ]
+            }
+          ],
+          "helper_paths": [
+            "bindings/dart/test/protocol_test.dart",
+            "bindings/dart/bin/grafikr_runtime.dart",
+            "bindings/dart/example/state_smoke.dart",
+            "scripts/verify_dart_package.py",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs",
+            "bindings/protocol/v1/widgets.json"
+          ]
+        },
+        "contract": {
+          "cwd": "bindings/dart",
+          "checks": [
+            {
+              "name": "dart-contract-tests",
+              "argv": [
+                "dart",
+                "test"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1",
+                "GRAFIKR_FIXTURE_HOLD_RESPONSES": "1",
+                "GRAFIKR_FIXTURE_EVENT_BURST": "512",
+                "GRAFIKR_FIXTURE_EVENT_MARKER": "../../target/dart-reader-progress.marker",
+                "GRAFIKR_FIXTURE_EVENT_COUNT_OVERFLOW": "1",
+                "GRAFIKR_FIXTURE_EVENT_BYTES_OVERFLOW": "1",
+                "GRAFIKR_FIXTURE_UNSUBSCRIBE_EVENT": "1"
+              }
+            },
+            {
+              "name": "responses.out_of_order",
+              "argv": [
+                "dart",
+                "test",
+                "--plain-name",
+                "correlates out-of-order responses by request id"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_REVERSE_RESPONSES": "1",
+                "GRAFIKR_FIXTURE_RESPONSE_MARKER": "../../target/dart-reverse-response.marker"
+              }
+            },
+            {
+              "name": "lifecycle.close_timeout_sentinel",
+              "argv": [
+                "dart",
+                "test",
+                "--plain-name",
+                "shutdown timeout kills only the Grafikr child process"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_DELAY_EXIT_MS": "6000",
+                "GRAFIKR_FIXTURE_EXIT_MARKER": "../../target/dart-shutdown-marker"
+              }
+            },
+            {
+              "name": "lifecycle.shutdown_response_timeout",
+              "argv": [
+                "dart",
+                "test",
+                "--plain-name",
+                "shutdown deadline includes an unresponsive host"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_PAUSE_AFTER_HELLO_MS": "8000",
+                "GRAFIKR_FIXTURE_PAUSE_MARKER": "../../target/dart-pause-marker"
+              }
+            },
+            {
+              "name": "command-queue-byte-limit",
+              "argv": [
+                "dart",
+                "test",
+                "--plain-name",
+                "bounds queued command bytes while the host is unresponsive"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_PAUSE_AFTER_HELLO_MS": "8000",
+                "GRAFIKR_FIXTURE_PAUSE_MARKER": "../../target/dart-pause-marker"
+              }
+            },
+            {
+              "name": "widget-inventory",
+              "argv": [
+                "dart",
+                "test",
+                "--plain-name",
+                "creates every shared widget and receives its declared events"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1",
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/dart/test/protocol_test.dart",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs",
+            "bindings/protocol/v1/widgets.json"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.eof_pending_256",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound",
+              "transport.queue_limits"
+            ],
+            "widgets": [
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.height",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas@resize",
+              "Checkbox",
+              "Checkbox.checked",
+              "Checkbox.label",
+              "Checkbox@change",
+              "Column",
+              "Column.background",
+              "Column.gap",
+              "Column.padding",
+              "Column.radius",
+              "Column.transform",
+              "Column.width",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.height",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.selected",
+              "DataGrid.width",
+              "DataGrid@data.request",
+              "DataGrid@select",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.transform",
+              "Grid.width",
+              "Image",
+              "Image.height",
+              "Image.image",
+              "Image.label",
+              "Image.width",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.width",
+              "Popup.x",
+              "Popup.y",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Radio",
+              "Radio.group",
+              "Radio.label",
+              "Radio.value",
+              "Radio@change",
+              "Row",
+              "Row.background",
+              "Row.gap",
+              "Row.height",
+              "Row.padding",
+              "Row.radius",
+              "Row.transform",
+              "ScrollView",
+              "ScrollView.grow",
+              "ScrollView.height",
+              "ScrollView.width",
+              "Slider",
+              "Slider.max",
+              "Slider.min",
+              "Slider.step",
+              "Slider.value",
+              "Slider.width",
+              "Slider@change",
+              "Spinner",
+              "Spinner.label",
+              "Spinner.size",
+              "Stack",
+              "Stack.height",
+              "Stack.transform",
+              "Stack.width",
+              "Switch",
+              "Switch.checked",
+              "Switch.label",
+              "Switch@change",
+              "Tabs",
+              "Tabs.active",
+              "Tabs.height",
+              "Tabs.labels",
+              "Tabs.width",
+              "Tabs@change",
+              "Text",
+              "Text.color",
+              "Text.size",
+              "Text.text",
+              "TextField",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField.text",
+              "TextField.width",
+              "TextField@change",
+              "Tooltip",
+              "Tooltip.delay_ms",
+              "Tooltip.label",
+              "TreeView",
+              "TreeView.height",
+              "TreeView.roots",
+              "TreeView.selected",
+              "TreeView.width",
+              "TreeView@select",
+              "VirtualList",
+              "VirtualList.height",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList@data.request",
+              "VirtualList@select"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-dart-package-scenarios",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_dart_package",
+                "--package-root",
+                "{package_root}"
+              ]
+            }
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          },
+          "helper_paths": [
+            "scripts/verify_dart_package.py",
+            "bindings/dart/lib/grafikr.dart",
+            "bindings/dart/example/state_smoke.dart",
+            "scripts/package_bindings.py"
+          ],
+          "requires_package_root": true
+        }
+      }
+    },
+    {
+      "name": "ruby",
+      "ecosystem": "Ruby",
+      "consumer_language": "Ruby",
+      "runtime_floor": "Ruby 3.4",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": "bindings/ruby",
+          "checks": [
+            {
+              "name": "fixture-host",
+              "argv": [
+                "cargo",
+                "build",
+                "--manifest-path",
+                "../../Cargo.toml",
+                "-p",
+                "grafikr-conformance",
+                "--bin",
+                "fixture-host"
+              ]
+            },
+            {
+              "name": "minitest",
+              "argv": [
+                "ruby",
+                "-Ilib",
+                "-Itest",
+                "-e",
+                "Dir['test/*_test.rb'].sort.each { |f| require_relative f }"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/ruby/test/protocol_test.rb",
+            "bindings/ruby/test/runtime_test.rb",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ],
+          "requires_fixture_host": true
+        },
+        "contract": {
+          "cwd": "bindings/ruby",
+          "checks": [
+            {
+              "name": "ruby-protocol-contract",
+              "argv": [
+                "ruby",
+                "-Ilib",
+                "-Itest",
+                "test/protocol_test.rb"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            },
+            {
+              "name": "ruby-widget-inventory",
+              "argv": [
+                "ruby",
+                "-Ilib",
+                "-Itest",
+                "test/protocol_test.rb",
+                "--name",
+                "test_creates_every_shared_widget_and_receives_declared_events"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1",
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/ruby/test/protocol_test.rb",
+            "bindings/ruby/lib/grafikr.rb",
+            "bindings/protocol/v1/widgets.json",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.eof_pending_256",
+              "transport.queue_limits",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-ruby-php-package-scenarios",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_ruby_php_packages",
+                "--package-root",
+                "{package_root}",
+                "--fixture-scenarios",
+                "--sdk",
+                "ruby"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "requires_fixture_host": true,
+          "requires_package_root": true,
+          "helper_paths": [
+            "scripts/verify_ruby_php_packages.py",
+            "scripts/package_bindings.py",
+            "bindings/ruby/lib/grafikr.rb",
+            "bindings/php/src/App.php",
+            "bindings/protocol/v1/fixtures/parity.jsonl"
+          ],
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "php",
+      "ecosystem": "PHP CLI",
+      "consumer_language": "PHP",
+      "runtime_floor": "PHP 8.4",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": "bindings/php",
+          "checks": [
+            {
+              "name": "fixture-host",
+              "argv": [
+                "cargo",
+                "build",
+                "--manifest-path",
+                "../../Cargo.toml",
+                "-p",
+                "grafikr-conformance",
+                "--bin",
+                "fixture-host"
+              ]
+            },
+            {
+              "name": "php-protocol",
+              "argv": [
+                "php",
+                "tests/protocol.php"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/php/tests/protocol.php",
+            "bindings/php/bin/grafikr-reader.php",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ]
+        },
+        "contract": {
+          "cwd": "bindings/php",
+          "checks": [
+            {
+              "name": "php-protocol-contract",
+              "argv": [
+                "php",
+                "tests/protocol.php"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1",
+                "GRAFIKR_FIXTURE_UNSUBSCRIBE_EVENT": "1",
+                "GRAFIKR_FIXTURE_DELAY_UNSUBSCRIBE_RESPONSE_MS": "150"
+              }
+            },
+            {
+              "name": "php-widget-inventory",
+              "argv": [
+                "php",
+                "tests/protocol.php"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1",
+                "GRAFIKR_FIXTURE_UNSUBSCRIBE_EVENT": "1",
+                "GRAFIKR_FIXTURE_DELAY_UNSUBSCRIBE_RESPONSE_MS": "150",
+                "GRAFIKR_FIXTURE_WIDGET_INVENTORY": "1"
+              }
+            },
+            {
+              "name": "php-pending-fiber-eof",
+              "argv": [
+                "php",
+                "tests/pending_fibers.php"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_HOLD_ALL_RESPONSES": "1",
+                "GRAFIKR_FIXTURE_EXIT_AFTER_STATE_GET_COUNT": "256"
+              },
+              "timeout_seconds": 15
+            }
+          ],
+          "helper_paths": [
+            "bindings/php/tests/protocol.php",
+            "bindings/php/tests/pending_fibers.php",
+            "bindings/php/src/App.php",
+            "bindings/protocol/v1/widgets.json",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "responses.out_of_order",
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "transport.queue_limits",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.unsubscribe_stale",
+              "events.subscribe_early_delivery",
+              "lifecycle.close_timeout_sentinel",
+              "callbacks.blocked_handler_bound",
+              "transport.eof_pending_256"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-ruby-php-package-scenarios",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_ruby_php_packages",
+                "--package-root",
+                "{package_root}",
+                "--fixture-scenarios",
+                "--sdk",
+                "php"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "requires_fixture_host": true,
+          "requires_package_root": true,
+          "helper_paths": [
+            "scripts/verify_ruby_php_packages.py",
+            "scripts/package_bindings.py",
+            "bindings/ruby/lib/grafikr.rb",
+            "bindings/php/src/App.php",
+            "bindings/protocol/v1/fixtures/parity.jsonl"
+          ],
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          }
+        }
+      }
+    },
+    {
+      "name": "lua",
+      "ecosystem": "Lua",
+      "consumer_language": "Lua",
+      "runtime_floor": "Lua 5.4",
+      "sdk_version": "1.1.0",
+      "suites": {
+        "unit": {
+          "cwd": "bindings/lua",
+          "checks": [
+            {
+              "name": "fixture-host",
+              "argv": [
+                "cargo",
+                "build",
+                "--manifest-path",
+                "../../Cargo.toml",
+                "-p",
+                "grafikr-conformance",
+                "--bin",
+                "fixture-host"
+              ]
+            },
+            {
+              "name": "lua-collection-unit",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/collection_unit.lua')"
+              ]
+            },
+            {
+              "name": "lua-request-validation-unit",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/request_unit.lua')"
+              ]
+            },
+            {
+              "name": "lua-runtime-floor",
+              "argv": [
+                "lua",
+                "-e",
+                "assert(_VERSION == 'Lua 5.4', 'Lua 5.4 required')"
+              ]
+            },
+            {
+              "name": "lua-runtime-install",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/runtime_install.lua')"
+              ]
+            },
+            {
+              "name": "lua-protocol",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/protocol.lua')"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            }
+          ],
+          "helper_paths": [
+            "bindings/lua/tests/protocol.lua",
+            "bindings/lua/tests/collection_unit.lua",
+            "bindings/lua/src/grafikr.lua",
+            "bindings/lua/src/grafikr_reader.lua",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs",
+            "bindings/lua/tests/request_unit.lua",
+            "bindings/lua/tests/runtime_install.lua",
+            "bindings/lua/src/grafikr_runtime.lua"
+          ]
+        },
+        "contract": {
+          "cwd": "bindings/lua",
+          "checks": [
+            {
+              "name": "lua-protocol-contract",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/protocol.lua')"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
+                "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1"
+              }
+            },
+            {
+              "name": "lua-response-correlation",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/out_of_order.lua')"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_REVERSE_RESPONSES": "1"
+              }
+            },
+            {
+              "name": "lua-pending-eof",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/pending_eof.lua')"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_HOLD_RESPONSES": "1",
+                "GRAFIKR_FIXTURE_EXIT_AFTER_HELLO_MS": "100"
+              }
+            },
+            {
+              "name": "lua-stale-unsubscribe",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/unsubscribe_stale.lua')"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_UNSUBSCRIBE_EVENT": "1",
+                "GRAFIKR_FIXTURE_DELAY_UNSUBSCRIBE_RESPONSE_MS": "150"
+              }
+            },
+            {
+              "name": "lua-close-sentinel",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/close_sentinel.lua')"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_DELAY_EXIT_MS": "6000"
+              },
+              "timeout_seconds": 15
+            },
+            {
+              "name": "lua-widget-inventory",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/widget_inventory.lua')"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1"
+              }
+            },
+            {
+              "name": "lua-request-validation-unit",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/request_unit.lua')"
+              ]
+            },
+            {
+              "name": "lua-blocked-handler-quota",
+              "argv": [
+                "lua",
+                "-e",
+                "package.path='src/?.lua;'..package.path; dofile('tests/blocked_handler.lua')"
+              ],
+              "env": {
+                "GRAFIKR_FIXTURE_EVENT_COUNT_OVERFLOW": "1",
+                "GRAFIKR_FIXTURE_EVENT_BYTES_OVERFLOW": "1"
+              },
+              "timeout_seconds": 25
+            }
+          ],
+          "helper_paths": [
+            "bindings/lua/tests/protocol.lua",
+            "bindings/lua/tests/widget_inventory.lua",
+            "bindings/lua/src/grafikr.lua",
+            "bindings/lua/src/grafikr_reader.lua",
+            "bindings/protocol/v1/widgets.json",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs",
+            "bindings/lua/tests/out_of_order.lua",
+            "bindings/lua/tests/pending_eof.lua",
+            "bindings/lua/tests/unsubscribe_stale.lua",
+            "bindings/lua/tests/close_sentinel.lua",
+            "bindings/lua/tests/blocked_handler.lua"
+          ],
+          "requires_fixture_host": true,
+          "coverage": {
+            "cases": [
+              "callbacks.nested_request",
+              "callbacks.exception_hook",
+              "callbacks.blocked_handler_bound",
+              "transport.utf8_newline_100k",
+              "values.i64_boundaries",
+              "values.non_finite_rejected",
+              "events.subscribe_early_delivery",
+              "responses.out_of_order",
+              "transport.eof_pending_256",
+              "events.unsubscribe_stale",
+              "transport.queue_limits",
+              "lifecycle.close_timeout_sentinel"
+            ],
+            "widgets": [
+              "Column",
+              "Column.gap",
+              "Column.padding",
+              "Column.background",
+              "Column.radius",
+              "Column.width",
+              "Column.transform",
+              "Row",
+              "Row.gap",
+              "Row.padding",
+              "Row.background",
+              "Row.radius",
+              "Row.height",
+              "Row.transform",
+              "Grid",
+              "Grid.columns",
+              "Grid.gap",
+              "Grid.padding",
+              "Grid.width",
+              "Grid.transform",
+              "Stack",
+              "Stack.width",
+              "Stack.height",
+              "Stack.transform",
+              "Text",
+              "Text.text",
+              "Text.size",
+              "Text.color",
+              "Button",
+              "Button.label",
+              "Button.variant",
+              "Button@click",
+              "TextField",
+              "TextField.text",
+              "TextField.width",
+              "TextField.multiline",
+              "TextField.password",
+              "TextField@change",
+              "Checkbox",
+              "Checkbox.label",
+              "Checkbox.checked",
+              "Checkbox@change",
+              "Radio",
+              "Radio.label",
+              "Radio.group",
+              "Radio.value",
+              "Radio@change",
+              "Switch",
+              "Switch.label",
+              "Switch.checked",
+              "Switch@change",
+              "Slider",
+              "Slider.value",
+              "Slider.min",
+              "Slider.max",
+              "Slider.step",
+              "Slider.width",
+              "Slider@change",
+              "ProgressBar",
+              "ProgressBar.value",
+              "ProgressBar.width",
+              "Spinner",
+              "Spinner.size",
+              "Spinner.label",
+              "ScrollView",
+              "ScrollView.width",
+              "ScrollView.height",
+              "ScrollView.grow",
+              "VirtualList",
+              "VirtualList.row_count",
+              "VirtualList.row_height",
+              "VirtualList.width",
+              "VirtualList.height",
+              "VirtualList@select",
+              "VirtualList@data.request",
+              "DataGrid",
+              "DataGrid.columns",
+              "DataGrid.row_count",
+              "DataGrid.row_height",
+              "DataGrid.width",
+              "DataGrid.height",
+              "DataGrid.selected",
+              "DataGrid@select",
+              "DataGrid@data.request",
+              "TreeView",
+              "TreeView.roots",
+              "TreeView.width",
+              "TreeView.height",
+              "TreeView.selected",
+              "TreeView@select",
+              "Modal",
+              "Modal.open",
+              "Modal.width",
+              "Popup",
+              "Popup.open",
+              "Popup.x",
+              "Popup.y",
+              "Popup.width",
+              "Tabs",
+              "Tabs.labels",
+              "Tabs.active",
+              "Tabs.width",
+              "Tabs.height",
+              "Tabs@change",
+              "ComboBox",
+              "ComboBox.options",
+              "ComboBox.selected",
+              "ComboBox.width",
+              "ComboBox@select",
+              "Tooltip",
+              "Tooltip.label",
+              "Tooltip.delay_ms",
+              "Image",
+              "Image.image",
+              "Image.width",
+              "Image.height",
+              "Image.label",
+              "Canvas",
+              "Canvas.commands",
+              "Canvas.label",
+              "Canvas.width",
+              "Canvas.height",
+              "Canvas@resize"
+            ]
+          }
+        },
+        "installed": {
+          "cwd": ".",
+          "checks": [
+            {
+              "name": "installed-lua-source-rock-scenarios",
+              "argv": [
+                "python",
+                "-m",
+                "scripts.verify_lua_package",
+                "--package-root",
+                "{package_root}"
+              ]
+            }
+          ],
+          "requires_fixture_host": true,
+          "requires_package_root": true,
+          "coverage": {
+            "cases": [
+              "installed.counter_form",
+              "installed.dashboard",
+              "installed.multi_window"
+            ],
+            "widgets": []
+          },
+          "helper_paths": [
+            "scripts/verify_lua_package.py",
+            "scripts/package_bindings.py",
+            "bindings/lua/src/grafikr.lua",
+            "bindings/lua/src/grafikr_reader.lua",
+            "tools/grafikr-conformance/src/bin/fixture-host.rs"
+          ]
+        }
+      }
+    }
+  ]
+}

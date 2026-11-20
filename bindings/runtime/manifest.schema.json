@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://grafikr.dev/runtime/manifest-v1.schema.json",
+  "title": "Grafikr runtime bundle manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format_version", "engine_version", "protocol", "abi", "target",
+    "min_os", "min_glibc", "build_sha", "build_config_sha256",
+    "source_dirty", "development_fixture", "system_requirements", "limits", "files"
+  ],
+  "properties": {
+    "format_version": {"const": 1},
+    "engine_version": {"type": "string", "minLength": 1},
+    "protocol": {"$ref": "#/$defs/version"},
+    "abi": {"$ref": "#/$defs/version"},
+    "target": {"enum": ["x86_64-pc-windows-msvc", "aarch64-pc-windows-msvc", "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "aarch64-apple-darwin"]},
+    "min_os": {"type": "string", "minLength": 1},
+    "min_glibc": {"type": ["string", "null"], "pattern": "^[0-9]+\\.[0-9]+$"},
+    "build_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "build_config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_dirty": {"type": "boolean"},
+    "development_fixture": {"type": "boolean"},
+    "system_requirements": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "limits": {"$ref": "#/$defs/limits"},
+    "files": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/file"}}
+  },
+  "allOf": [
+    {"if": {"properties": {"target": {"pattern": "-unknown-linux-gnu$"}}}, "then": {"properties": {"min_glibc": {"type": "string"}}}},
+    {"if": {"properties": {"target": {"not": {"pattern": "-unknown-linux-gnu$"}}}}, "then": {"properties": {"min_glibc": {"type": "null"}}}}
+  ],
+  "$defs": {
+    "version": {"type": "object", "additionalProperties": false, "required": ["major", "minor"], "properties": {"major": {"type": "integer", "minimum": 1}, "minor": {"type": "integer", "minimum": 0}}},
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_bytes", "json_depth", "command_queue_messages", "command_queue_bytes",
+        "output_queue_messages", "output_queue_bytes", "windows", "nodes", "states",
+        "subscriptions", "image_bytes", "image_session_bytes", "image_chunk_bytes",
+        "canvas_commands", "canvas_bytes", "model_bytes", "collection_rows_per_node",
+        "collection_bytes_per_node", "collection_bytes_session", "collection_request_rows",
+        "tree_items", "tree_depth", "host_shutdown_seconds"
+      ],
+      "properties": {
+        "frame_bytes": {"const": 8388608},
+        "json_depth": {"const": 64},
+        "command_queue_messages": {"const": 1024},
+        "command_queue_bytes": {"const": 16777216},
+        "output_queue_messages": {"const": 1024},
+        "output_queue_bytes": {"const": 16777216},
+        "windows": {"const": 16},
+        "nodes": {"const": 100000},
+        "states": {"const": 100000},
+        "subscriptions": {"const": 100000},
+        "image_bytes": {"const": 67108864},
+        "image_session_bytes": {"const": 268435456},
+        "image_chunk_bytes": {"const": 1048576},
+        "canvas_commands": {"const": 10000},
+        "canvas_bytes": {"const": 8388608},
+        "model_bytes": {"const": 134217728},
+        "collection_rows_per_node": {"const": 2048},
+        "collection_bytes_per_node": {"const": 8388608},
+        "collection_bytes_session": {"const": 67108864},
+        "collection_request_rows": {"const": 512},
+        "tree_items": {"const": 50000},
+        "tree_depth": {"const": 64},
+        "host_shutdown_seconds": {"const": 5}
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size", "sha256", "role"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "pattern": "^[^\\\\]+$"},
+        "size": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "role": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

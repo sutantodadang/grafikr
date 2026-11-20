@@ -410,6 +410,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
+name = "base64"
+version = "0.22.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+
+[[package]]
 name = "bit-set"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -579,7 +585,7 @@ dependencies = [
 
 [[package]]
 name = "combo-demo"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -635,7 +641,7 @@ dependencies = [
 
 [[package]]
 name = "counter"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -669,21 +675,21 @@ checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
 
 [[package]]
 name = "dashboard"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
 
 [[package]]
 name = "datagrid-demo"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
 
 [[package]]
 name = "dialog"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -912,7 +918,7 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 
 [[package]]
 name = "form"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -1053,7 +1059,7 @@ dependencies = [
 
 [[package]]
 name = "grafikr"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "accesskit",
  "grafikr-core",
@@ -1064,14 +1070,36 @@ dependencies = [
 
 [[package]]
 name = "grafikr-bench"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
 
 [[package]]
+name = "grafikr-bridge"
+version = "1.1.0"
+dependencies = [
+ "base64",
+ "grafikr-core",
+ "grafikr-shell",
+ "grafikr-widgets",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "grafikr-conformance"
+version = "1.1.0"
+dependencies = [
+ "grafikr-bridge",
+ "grafikr-core",
+ "grafikr-shell",
+ "serde_json",
+]
+
+[[package]]
 name = "grafikr-core"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "accesskit",
  "parley",
@@ -1079,8 +1107,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "grafikr-ffi"
+version = "1.1.0"
+dependencies = [
+ "grafikr-bridge",
+ "grafikr-core",
+ "grafikr-shell",
+]
+
+[[package]]
+name = "grafikr-host"
+version = "1.1.0"
+dependencies = [
+ "grafikr-bridge",
+ "grafikr-core",
+ "grafikr-shell",
+ "serde_json",
+]
+
+[[package]]
 name = "grafikr-render"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "bytemuck",
  "grafikr-core",
@@ -1094,7 +1141,7 @@ dependencies = [
 
 [[package]]
 name = "grafikr-shell"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "accesskit",
  "accesskit_winit",
@@ -1110,7 +1157,7 @@ dependencies = [
 
 [[package]]
 name = "grafikr-widgets"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "accesskit",
  "grafikr-core",
@@ -1304,7 +1351,7 @@ checksum = "913a7d294ad056474749152107309fdee3ec17d2482d1ab70fdc61a81c64b9a3"
 
 [[package]]
 name = "image-demo"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -1318,6 +1365,12 @@ dependencies = [
  "equivalent",
  "hashbrown 0.17.1",
 ]
+
+[[package]]
+name = "itoa"
+version = "1.0.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bd1574e617a9a6c1f8f8181bd7e841e1f20e4277607ef28945765188d6284d4"
 
 [[package]]
 name = "jni"
@@ -1520,7 +1573,7 @@ dependencies = [
 
 [[package]]
 name = "menu-demo"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -1547,7 +1600,7 @@ dependencies = [
 
 [[package]]
 name = "multi-window"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -2499,6 +2552,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_json"
+version = "1.0.154"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7e9cc8b1b85264074fbcc02a88680c4096b1e47df8f739dceb03bf482f04bd6"
+dependencies = [
+ "itoa",
+ "memchr",
+ "serde",
+ "serde_core",
+ "zmij",
+]
+
+[[package]]
 name = "serde_repr"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2511,7 +2577,7 @@ dependencies = [
 
 [[package]]
 name = "settings"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -2627,7 +2693,7 @@ dependencies = [
 
 [[package]]
 name = "spinner-demo"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -2705,7 +2771,7 @@ dependencies = [
 
 [[package]]
 name = "tabs-demo"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -2851,7 +2917,7 @@ dependencies = [
 
 [[package]]
 name = "tooltip-demo"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -2889,7 +2955,7 @@ dependencies = [
 
 [[package]]
 name = "tree-demo"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "grafikr",
 ]
@@ -3906,6 +3972,12 @@ name = "zlib-rs"
 version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112"
+
+[[package]]
+name = "zmij"
+version = "1.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
 
 [[package]]
 name = "zvariant"

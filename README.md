@@ -4,7 +4,7 @@ A native desktop UI framework for Rust with a retained widget tree, reactive
 state, its own GPU renderer (wgpu), and Unicode text through Parley. No WebView,
 no WinUI/Cocoa/GTK wrapper.
 
-Status: **1.0.0** on Windows/D3D12. Wayland/X11/macOS QA and the GPU vendor
+Status: **1.1.0** on Windows/D3D12. Wayland/X11/macOS QA and the GPU vendor
 matrix are still outstanding. The public API follows SemVer.
 
 ![counter example](docs/counter.png)
@@ -40,6 +40,19 @@ cargo run -p grafikr-bench --release
 
 Requires Rust 1.88+ (edition 2024). The GPU is accessed through DX12/Vulkan/
 Metal/GLES.
+
+## Cross-language SDKs
+
+The workspace contains SDK source for C, C++, Python, JavaScript/TypeScript,
+C#/.NET, Go, Java/Kotlin, Swift, Dart, Ruby, PHP, and Lua. C and C++ use the
+native ABI; the higher-level SDKs launch the separate Grafikr host over local
+JSON Lines pipes. Start with the [runtime installation guide](docs/bindings/runtime-installation.md),
+then use the README in the language directory under `bindings/`.
+
+These SDKs are local implementation work, not published packages or a full
+platform support promise. The [support matrix](docs/bindings/support-matrix.md)
+shows current test evidence and open platform, GUI, accessibility, and hardware
+gates. Package registries have not been published.
 
 ## What's included
 
@@ -101,7 +114,7 @@ shadows. The renderer never sees the widget tree.
 
 The full phase list is in [`docs/ROADMAP.md`](docs/ROADMAP.md). See the
 [documentation index](docs/README.md) for the tutorial, status, migration notes,
-architecture decisions, and the release checklist.
+architecture decisions, cross-language guides, and the release checklist.
 
 ## API
 

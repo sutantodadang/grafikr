@@ -1,0 +1,16 @@
+[package]
+name = "grafikr-bridge"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Versioned cross-language UI protocol and runtime bridge for Grafikr"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+base64.workspace = true
+grafikr-core.workspace = true
+grafikr-shell.workspace = true
+grafikr-widgets.workspace = true

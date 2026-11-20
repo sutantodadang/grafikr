@@ -1,0 +1,16 @@
+{
+  "display_cells": [
+    {"id":"win-x64-d3d12","target":"x86_64-pc-windows-msvc","backend":"D3D12"},
+    {"id":"win-arm64-d3d12","target":"aarch64-pc-windows-msvc","backend":"D3D12"},
+    {"id":"linux-x64-x11-vulkan","target":"x86_64-unknown-linux-gnu","backend":"X11/Vulkan"},
+    {"id":"linux-x64-wayland-vulkan","target":"x86_64-unknown-linux-gnu","backend":"Wayland/Vulkan"},
+    {"id":"linux-arm64-x11-vulkan","target":"aarch64-unknown-linux-gnu","backend":"X11/Vulkan"},
+    {"id":"linux-arm64-wayland-vulkan","target":"aarch64-unknown-linux-gnu","backend":"Wayland/Vulkan"},
+    {"id":"macos-x64-metal","target":"x86_64-apple-darwin","backend":"Metal"},
+    {"id":"macos-arm64-metal","target":"aarch64-apple-darwin","backend":"Metal"}
+  ],
+  "scenarios": ["counter_form", "dashboard", "multi_window"],
+  "benchmark_workloads": ["request_latency", "label_update", "scroll_50000", "resource_cycles_100", "rss_counters", "idle_redraw_4s"],
+  "os_input_methods": ["windows_sendinput", "xdotool", "osascript", "manual_supervised"],
+  "hardware_gpu_kinds": ["integrated", "discrete", "physical"]
+}

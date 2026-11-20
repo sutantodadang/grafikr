@@ -3,8 +3,8 @@
 use std::rc::Rc;
 
 use grafikr_core::{
-    EventCx, EventStatus, Interaction, MeasureCx, MountCx, NodeId, PaintCx, Point, Rect, Size,
-    Style, TextCache, Transition, UiEvent, View, Widget,
+    DirtyFlags, EventCx, EventStatus, Interaction, MeasureCx, MountCx, NodeId, PaintCx, Point,
+    Rect, Signal, Size, Style, TextCache, Transition, UiEvent, View, Widget, observe,
 };
 
 use crate::into_views;
@@ -23,18 +23,18 @@ pub enum ButtonVariant {
 }
 
 pub struct Button {
-    label: String,
+    label: Signal<String>,
     on_click: Option<Handler>,
-    variant: ButtonVariant,
-    icon: bool,
+    variant: Signal<ButtonVariant>,
+    icon: Signal<bool>,
 }
 
 pub fn button(label: impl Into<String>) -> Button {
     Button {
-        label: label.into(),
+        label: Signal::new(label.into()),
         on_click: None,
-        variant: ButtonVariant::Primary,
-        icon: false,
+        variant: Signal::new(ButtonVariant::Primary),
+        icon: Signal::new(false),
     }
 }
 
@@ -44,15 +44,42 @@ impl Button {
         self
     }
 
-    pub fn secondary(mut self) -> Self {
-        self.variant = ButtonVariant::Secondary;
+    pub fn secondary(self) -> Self {
+        self.variant.set(ButtonVariant::Secondary);
         self
     }
 
     /// Compact square button for an icon glyph or one short label.
-    pub fn icon(mut self) -> Self {
-        self.icon = true;
+    pub fn icon(self) -> Self {
+        self.icon.set(true);
         self
+    }
+
+    pub(crate) fn controller(&self) -> ButtonController {
+        ButtonController {
+            label: self.label.clone(),
+            variant: self.variant.clone(),
+            icon: self.icon.clone(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct ButtonController {
+    label: Signal<String>,
+    variant: Signal<ButtonVariant>,
+    icon: Signal<bool>,
+}
+
+impl ButtonController {
+    pub(crate) fn set_label(&self, value: String) {
+        self.label.set(value);
+    }
+    pub(crate) fn set_variant(&self, value: ButtonVariant) {
+        self.variant.set(value);
+    }
+    pub(crate) fn set_icon(&self, value: bool) {
+        self.icon.set(value);
     }
 }
 
@@ -60,6 +87,13 @@ impl View for Button {
     fn mount(&self, cx: &mut MountCx) -> NodeId {
         let theme = cx.theme.clone();
         let id = cx.add_node(Style::default());
+        let runtime = cx.runtime.clone();
+        let subscriber: Rc<dyn Fn()> = Rc::new(move || runtime.invalidate(id, DirtyFlags::LAYOUT));
+        observe(&subscriber, || {
+            self.label.get();
+            self.variant.get();
+            self.icon.get();
+        });
         cx.set_widget(
             id,
             ButtonWidget {
@@ -68,8 +102,9 @@ impl View for Button {
                 cache: TextCache::default(),
                 pressed: false,
                 font_size: theme.body_size,
-                variant: self.variant,
-                icon: self.icon,
+                variant: self.variant.clone(),
+                icon: self.icon.clone(),
+                _subscriber: subscriber,
                 hover: Transition::new(0.0),
             },
         );
@@ -78,14 +113,15 @@ impl View for Button {
 }
 
 struct ButtonWidget {
-    label: String,
+    label: Signal<String>,
     on_click: Option<Handler>,
     cache: TextCache,
     pressed: bool,
     font_size: f32,
-    variant: ButtonVariant,
-    icon: bool,
+    variant: Signal<ButtonVariant>,
+    icon: Signal<bool>,
     hover: Transition,
+    _subscriber: Rc<dyn Fn()>,
 }
 
 impl ButtonWidget {
@@ -100,13 +136,13 @@ impl Widget for ButtonWidget {
     fn measure(&mut self, cx: &mut MeasureCx, _available: Size) -> Size {
         let shape = self.cache.get(
             cx.text,
-            &self.label,
+            &self.label.get(),
             self.font_size,
             cx.theme.foreground,
             None,
         );
         Size::new(
-            if self.icon {
+            if self.icon.get() {
                 (shape.width + 16.0).max(cx.theme.control_height)
             } else {
                 (shape.width + 32.0).max(80.0)
@@ -126,7 +162,9 @@ impl Widget for ButtonWidget {
             cx.runtime.request_animation();
         }
         let t = self.hover.value();
-        let (fill, text_color) = match self.variant {
+        let variant = self.variant.get();
+        let label = self.label.get();
+        let (fill, text_color) = match variant {
             ButtonVariant::Primary => {
                 let idle = Interaction {
                     hovered: false,
@@ -152,7 +190,7 @@ impl Widget for ButtonWidget {
                 (fill, cx.theme.foreground)
             }
         };
-        match self.variant {
+        match variant {
             ButtonVariant::Primary => cx.push_rect(rect, fill, radius),
             ButtonVariant::Secondary => cx.push_bordered_rect(
                 rect,
@@ -162,7 +200,7 @@ impl Widget for ButtonWidget {
             ),
         }
         if cx.state.focused {
-            let ring = match self.variant {
+            let ring = match variant {
                 ButtonVariant::Primary => grafikr_core::Color::WHITE.with_alpha(170),
                 ButtonVariant::Secondary => cx.theme.accent,
             };
@@ -176,7 +214,7 @@ impl Widget for ButtonWidget {
 
         let shape = self
             .cache
-            .get(cx.text, &self.label, self.font_size, text_color, None);
+            .get(cx.text, &label, self.font_size, text_color, None);
         let origin = Point::new(
             rect.x + (rect.width - shape.width) * 0.5,
             rect.y + (rect.height - shape.height) * 0.5,
@@ -185,6 +223,9 @@ impl Widget for ButtonWidget {
     }
 
     fn event(&mut self, cx: &mut EventCx, event: &UiEvent) -> EventStatus {
+        if cx.state.disabled {
+            return EventStatus::Ignored;
+        }
         match event {
             UiEvent::PointerDown { .. } => {
                 self.pressed = true;
@@ -242,7 +283,7 @@ impl Widget for ButtonWidget {
 
     fn accessibility(&mut self, node: &mut accesskit::Node) {
         node.set_role(accesskit::Role::Button);
-        node.set_label(self.label.clone());
+        node.set_label(self.label.get());
         node.add_action(accesskit::Action::Click);
     }
 }

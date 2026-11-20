@@ -6,6 +6,10 @@ members = [
     "crates/grafikr-shell",
     "crates/grafikr-render",
     "crates/grafikr-widgets",
+    "crates/grafikr-bridge",
+    "crates/grafikr-host",
+    "crates/grafikr-ffi",
+    "tools/grafikr-conformance",
     "examples/counter",
     "examples/form",
     "examples/dashboard",
@@ -25,18 +29,25 @@ members = [
 default-members = ["examples/counter"]
 
 [workspace.package]
-version = "1.0.0"
+version = "1.1.0"
 edition = "2024"
 rust-version = "1.88"
 license = "AGPL-3.0-only"
 repository = "https://github.com/sutantodadang/grafikr"
 
 [workspace.dependencies]
-grafikr-core = { version = "1.0.0", path = "crates/grafikr-core" }
-grafikr-render = { version = "1.0.0", path = "crates/grafikr-render" }
-grafikr-widgets = { version = "1.0.0", path = "crates/grafikr-widgets" }
-grafikr-shell = { version = "1.0.0", path = "crates/grafikr-shell" }
-grafikr = { version = "1.0.0", path = "crates/grafikr" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+grafikr-core = { version = "1.1.0", path = "crates/grafikr-core" }
+grafikr-render = { version = "1.1.0", path = "crates/grafikr-render" }
+grafikr-widgets = { version = "1.1.0", path = "crates/grafikr-widgets" }
+grafikr-shell = { version = "1.1.0", path = "crates/grafikr-shell" }
+grafikr-bridge = { version = "1.1.0", path = "crates/grafikr-bridge" }
+grafikr-host = { version = "1.1.0", path = "crates/grafikr-host" }
+grafikr-ffi = { version = "1.1.0", path = "crates/grafikr-ffi" }
+grafikr-conformance = { version = "1.1.0", path = "tools/grafikr-conformance" }
+grafikr = { version = "1.1.0", path = "crates/grafikr" }
 
 # Pinned per docs/ROADMAP.md §11: isolate fast-moving graphics deps.
 winit = { version = "0.30.12", features = ["rwh_06"] }

@@ -1,5 +1,14 @@
 # Migrating to 1.0
 
+## Cross-language additions in 1.1
+
+The C ABI and JSON Lines protocol are additive and remain at version 1.0. The
+language SDK APIs live under `bindings/`; they do not replace or change the Rust
+`View`, `Signal`, or `App` APIs described below. Their local package metadata is
+version 1.1.0, but those SDK packages have not been published. Check
+`docs/bindings/support-matrix.md` before treating a local SDK/runtime artifact
+as supported on a target.
+
 Release 1.0.0 freezes the public API of the `grafikr` crate. Since 0.1.0 was
 never published, the following changes are the relevant upgrade surface.
 

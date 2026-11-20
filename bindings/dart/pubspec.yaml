@@ -1,0 +1,10 @@
+name: grafikr
+version: 1.1.0
+description: Dart VM desktop client for Grafikr
+repository: https://github.com/sutantodadang/grafikr/tree/main/bindings/dart
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+dependencies:
+  crypto: ^3.0.6
+dev_dependencies:
+  test: ^1.26.0

@@ -1,10 +1,11 @@
 //! Text view: static or bound to signals.
 
+use std::cell::Cell;
 use std::rc::Rc;
 
 use grafikr_core::{
-    BoundText, Color, DirtyFlags, MeasureCx, MountCx, NodeId, PaintCx, Point, Rect, Size, Style,
-    TextCache, Theme, View, Widget,
+    BoundText, Color, DirtyFlags, MeasureCx, MountCx, NodeId, PaintCx, Point, Rect, Signal, Size,
+    Style, TextCache, Theme, View, Widget, bind, observe,
 };
 
 use crate::into_views;
@@ -43,28 +44,59 @@ enum Source {
 
 pub struct Text {
     content: TextContent,
-    font_size: Option<f32>,
-    color: Option<Color>,
+    font_size: Rc<Cell<Option<f32>>>,
+    color: Rc<Cell<Option<Color>>>,
 }
 
 pub fn text(content: impl Into<TextContent>) -> Text {
     Text {
         content: content.into(),
-        font_size: None,
-        color: None,
+        font_size: Rc::new(Cell::new(None)),
+        color: Rc::new(Cell::new(None)),
     }
 }
 
 impl Text {
-    pub fn size(mut self, size: f32) -> Self {
-        self.font_size = Some(size);
+    pub fn size(self, size: f32) -> Self {
+        self.font_size.set(Some(size));
         self
     }
 
-    pub fn color(mut self, color: Color) -> Self {
-        self.color = Some(color);
+    pub fn color(self, color: Color) -> Self {
+        self.color.set(Some(color));
         self
     }
+}
+
+#[derive(Clone)]
+pub(crate) struct TextController {
+    text: Signal<String>,
+    font_size: Rc<Cell<Option<f32>>>,
+    color: Rc<Cell<Option<Color>>>,
+}
+
+impl TextController {
+    pub(crate) fn set_text(&self, value: String) {
+        self.text.set(value);
+    }
+    pub(crate) fn set_size(&self, value: f32) {
+        self.font_size.set(Some(value));
+    }
+    pub(crate) fn set_color(&self, value: Color) {
+        self.color.set(Some(value));
+    }
+}
+
+pub(crate) fn dynamic_text(initial: String) -> (Text, TextController) {
+    let signal = Signal::new(initial);
+    let source = signal.clone();
+    let view = text(bind(move || source.get()));
+    let controller = TextController {
+        text: signal,
+        font_size: view.font_size.clone(),
+        color: view.color.clone(),
+    };
+    (view, controller)
 }
 
 impl View for Text {
@@ -78,6 +110,10 @@ impl View for Text {
                     runtime.invalidate(id, DirtyFlags::LAYOUT);
                 });
                 let _ = bound.tracked(&subscriber);
+                observe(&subscriber, || {
+                    self.font_size.get();
+                    self.color.get();
+                });
                 Source::Bound {
                     value: bound.clone(),
                     _subscriber: subscriber,
@@ -88,8 +124,8 @@ impl View for Text {
             id,
             TextWidget {
                 source,
-                font_size: self.font_size,
-                color: self.color,
+                font_size: self.font_size.clone(),
+                color: self.color.clone(),
                 cache: TextCache::default(),
             },
         );
@@ -99,8 +135,8 @@ impl View for Text {
 
 struct TextWidget {
     source: Source,
-    font_size: Option<f32>,
-    color: Option<Color>,
+    font_size: Rc<Cell<Option<f32>>>,
+    color: Rc<Cell<Option<Color>>>,
     cache: TextCache,
 }
 
@@ -114,8 +150,8 @@ impl TextWidget {
 
     fn style(&self, theme: &Theme) -> (f32, Color) {
         (
-            self.font_size.unwrap_or(theme.body_size),
-            self.color.unwrap_or(theme.foreground),
+            self.font_size.get().unwrap_or(theme.body_size),
+            self.color.get().unwrap_or(theme.foreground),
         )
     }
 }

@@ -1,0 +1,16 @@
+[package]
+name = "grafikr-conformance"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+grafikr-bridge.workspace = true
+grafikr-core.workspace = true
+grafikr-shell.workspace = true
+serde_json.workspace = true
+
+[[bin]]
+name = "fixture-host"
+path = "src/bin/fixture-host.rs"

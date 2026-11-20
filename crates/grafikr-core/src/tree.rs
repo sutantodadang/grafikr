@@ -26,6 +26,14 @@ pub struct NodeId {
     generation: u32,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TreeEditError {
+    StaleNode,
+    Cycle,
+    InvalidIndex,
+    RootMove,
+}
+
 impl NodeId {
     pub const fn new(index: u32, generation: u32) -> Self {
         Self { index, generation }
@@ -310,6 +318,54 @@ impl Tree {
         &self.node(id).children
     }
 
+    /// Move a retained subtree without replacing its node IDs or widget state.
+    pub fn reparent(
+        &mut self,
+        child: NodeId,
+        parent: NodeId,
+        index: usize,
+    ) -> Result<(), TreeEditError> {
+        if self.get(child).is_none() || self.get(parent).is_none() {
+            return Err(TreeEditError::StaleNode);
+        }
+        if self.root == Some(child) {
+            return Err(TreeEditError::RootMove);
+        }
+        if child == parent || self.is_within(parent, child) {
+            return Err(TreeEditError::Cycle);
+        }
+        let old_parent = self.node(child).parent.ok_or(TreeEditError::RootMove)?;
+        let target_len = self.node(parent).children.len() - usize::from(old_parent == parent);
+        if index > target_len {
+            return Err(TreeEditError::InvalidIndex);
+        }
+        self.node_mut(old_parent).children.retain(|id| *id != child);
+        self.node_mut(parent).children.insert(index, child);
+        self.node_mut(child).parent = Some(parent);
+        self.sync_children(old_parent);
+        self.sync_children(parent);
+        self.mark_dirty(parent, DirtyFlags::LAYOUT);
+        self.mark_dirty(old_parent, DirtyFlags::LAYOUT);
+        Ok(())
+    }
+
+    pub fn set_style(&mut self, id: NodeId, style: Style) -> Result<(), TreeEditError> {
+        let Some(node) = self.get(id) else {
+            return Err(TreeEditError::StaleNode);
+        };
+        let taffy_id = node.taffy;
+        let is_root = self.root == Some(id);
+        self.taffy
+            .set_style(taffy_id, to_taffy(&style, is_root))
+            .map_err(|_| TreeEditError::StaleNode)?;
+        self.node_mut(id).style = style;
+        self.mark_dirty(
+            id,
+            DirtyFlags::LAYOUT | DirtyFlags::PAINT | DirtyFlags::ACCESSIBILITY,
+        );
+        Ok(())
+    }
+
     /// Number of live nodes in the arena.
     pub fn node_count(&self) -> usize {
         self.slots.iter().filter(|slot| slot.node.is_some()).count()
@@ -351,6 +407,16 @@ impl Tree {
                 node.dirty = DirtyFlags::NONE;
             }
         }
+    }
+
+    pub fn mark_all_dirty(&mut self, flags: DirtyFlags) {
+        let flags = flags.escalate();
+        for slot in &mut self.slots {
+            if let Some(node) = &mut slot.node {
+                node.dirty |= flags;
+            }
+        }
+        self.dirty |= flags;
     }
 
     /// Remove a node and its subtree.

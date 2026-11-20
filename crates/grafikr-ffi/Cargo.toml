@@ -1,0 +1,17 @@
+[package]
+name = "grafikr-ffi"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "C ABI for the Grafikr desktop UI runtime"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+grafikr-bridge.workspace = true
+grafikr-core.workspace = true
+grafikr-shell.workspace = true
+

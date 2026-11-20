@@ -1,0 +1,11 @@
+{
+  "format_version": 1,
+  "targets": [
+    {"triple": "x86_64-pc-windows-msvc", "os": "windows", "architecture": "x86_64", "min_os": "Windows 11 24H2 build 26100", "min_glibc": null},
+    {"triple": "aarch64-pc-windows-msvc", "os": "windows", "architecture": "aarch64", "min_os": "Windows 11 24H2 build 26100", "min_glibc": null},
+    {"triple": "x86_64-unknown-linux-gnu", "os": "linux", "architecture": "x86_64", "min_os": "Ubuntu 22.04 / glibc 2.35", "min_glibc": "2.35"},
+    {"triple": "aarch64-unknown-linux-gnu", "os": "linux", "architecture": "aarch64", "min_os": "Ubuntu 22.04 / glibc 2.35", "min_glibc": "2.35"},
+    {"triple": "x86_64-apple-darwin", "os": "macos", "architecture": "x86_64", "min_os": "macOS 14", "min_glibc": null},
+    {"triple": "aarch64-apple-darwin", "os": "macos", "architecture": "aarch64", "min_os": "macOS 14", "min_glibc": null}
+  ]
+}

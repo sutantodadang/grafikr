@@ -3,30 +3,53 @@
 use std::time::{Duration, Instant};
 
 use grafikr_core::{
-    EventCx, EventStatus, IntoViews, MeasureCx, MountCx, NodeId, PaintCx, Point, Rect, Size, Style,
-    TextCache, UiEvent, View, Widget,
+    DirtyFlags, EventCx, EventStatus, IntoViews, MeasureCx, MountCx, NodeId, PaintCx, Point, Rect,
+    Signal, Size, Style, TextCache, UiEvent, View, Widget, observe,
 };
+use std::rc::Rc;
 
 use crate::into_views;
 
 pub struct Tooltip {
-    label: String,
+    label: Signal<String>,
     child: Box<dyn IntoViews>,
-    delay: Duration,
+    delay_ms: Signal<u64>,
 }
 
 pub fn tooltip(label: impl Into<String>, child: impl IntoViews + 'static) -> Tooltip {
     Tooltip {
-        label: label.into(),
+        label: Signal::new(label.into()),
         child: Box::new(child),
-        delay: Duration::from_millis(450),
+        delay_ms: Signal::new(450),
     }
 }
 
 impl Tooltip {
-    pub fn delay_ms(mut self, delay: u64) -> Self {
-        self.delay = Duration::from_millis(delay);
+    pub fn delay_ms(self, delay: u64) -> Self {
+        self.delay_ms.set(delay);
         self
+    }
+
+    pub(crate) fn controller(&self) -> TooltipController {
+        TooltipController {
+            label: self.label.clone(),
+            delay_ms: self.delay_ms.clone(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct TooltipController {
+    label: Signal<String>,
+    delay_ms: Signal<u64>,
+}
+
+impl TooltipController {
+    pub(crate) fn set_label(&self, value: String) {
+        self.label.set(value);
+    }
+    pub(crate) fn set_delay_ms(&self, value: u64) {
+        self.delay_ms.set(value);
     }
 }
 
@@ -37,14 +60,24 @@ impl View for Tooltip {
             ..Style::default()
         });
         cx.children(id, |cx| self.child.mount_into(cx));
+        let runtime = cx.runtime.clone();
+        let label = self.label.clone();
+        let delay = self.delay_ms.clone();
+        let subscriber: Rc<dyn Fn()> =
+            Rc::new(move || runtime.invalidate(id, DirtyFlags::PAINT | DirtyFlags::ACCESSIBILITY));
+        observe(&subscriber, || {
+            label.get();
+            delay.get();
+        });
         cx.set_widget(
             id,
             TooltipWidget {
                 label: self.label.clone(),
-                delay: self.delay,
+                delay_ms: self.delay_ms.clone(),
                 since: None,
                 shown: false,
                 cache: TextCache::default(),
+                _subscriber: subscriber,
             },
         );
         id
@@ -52,11 +85,12 @@ impl View for Tooltip {
 }
 
 struct TooltipWidget {
-    label: String,
-    delay: Duration,
+    label: Signal<String>,
+    delay_ms: Signal<u64>,
     since: Option<Instant>,
     shown: bool,
     cache: TextCache,
+    _subscriber: Rc<dyn Fn()>,
 }
 
 impl TooltipWidget {
@@ -76,7 +110,7 @@ impl Widget for TooltipWidget {
             let Some(since) = self.since else {
                 return;
             };
-            if since.elapsed() >= self.delay {
+            if since.elapsed() >= Duration::from_millis(self.delay_ms.get()) {
                 self.shown = true;
             } else {
                 cx.runtime.request_animation();
@@ -85,7 +119,7 @@ impl Widget for TooltipWidget {
         }
         let shape = self.cache.get(
             cx.text,
-            &self.label,
+            &self.label.get(),
             cx.theme.caption_size,
             cx.theme.foreground,
             None,
@@ -126,7 +160,7 @@ impl Widget for TooltipWidget {
                 }
                 if let Some(since) = self.since
                     && !self.shown
-                    && since.elapsed() >= self.delay
+                    && since.elapsed() >= Duration::from_millis(self.delay_ms.get())
                 {
                     self.shown = true;
                     cx.request_paint();
@@ -145,7 +179,7 @@ impl Widget for TooltipWidget {
     }
 
     fn accessibility(&mut self, node: &mut accesskit::Node) {
-        node.set_description(self.label.clone());
+        node.set_description(self.label.get());
     }
 }
 

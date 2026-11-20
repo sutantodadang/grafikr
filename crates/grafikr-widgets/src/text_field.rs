@@ -270,13 +270,16 @@ impl Widget for TextFieldWidget {
                 }
                 EventStatus::Handled
             }
-            UiEvent::SetValue(text) if !self.password => {
-                self.with_driver(cx, |driver| {
-                    driver.select_all();
-                    driver.insert_or_replace_selection(text);
-                });
-                self.report();
-                cx.request_layout();
+            UiEvent::SetValue(text) => {
+                if self.editor.text() != text {
+                    self.with_driver(cx, |driver| {
+                        driver.clear_compose();
+                        driver.select_all();
+                        driver.insert_or_replace_selection(text);
+                    });
+                    self.report();
+                    cx.request_layout();
+                }
                 EventStatus::Handled
             }
             UiEvent::KeyDown { key, modifiers, .. } => {

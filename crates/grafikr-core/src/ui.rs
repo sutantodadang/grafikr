@@ -10,7 +10,7 @@ use crate::event::{Clipboard, EventStatus, Key, NoopClipboard, UiEvent};
 use crate::runtime::{DirtyFlags, Runtime};
 use crate::style::{CursorIcon, Interaction, Theme};
 use crate::text::TextEngine;
-use crate::tree::{NodeId, Tree, paint_tree};
+use crate::tree::{NodeId, Tree, TreeEditError, paint_tree};
 use crate::view::{MountCx, View};
 
 pub struct MeasureCx<'a> {
@@ -155,6 +155,88 @@ impl Ui {
         self.tree.set_root(root);
         self.tree.dirty = DirtyFlags::ALL;
         self.runtime.request_frame();
+    }
+
+    pub fn with_mount_cx<R>(
+        &mut self,
+        parent: NodeId,
+        f: impl FnOnce(&mut MountCx<'_>) -> R,
+    ) -> Result<R, TreeEditError> {
+        if self.tree.get(parent).is_none() {
+            return Err(TreeEditError::StaleNode);
+        }
+        let mut cx = MountCx {
+            tree: &mut self.tree,
+            text: &mut self.text,
+            theme: &self.theme,
+            runtime: &self.runtime,
+            parent: Some(parent),
+        };
+        let result = f(&mut cx);
+        cx.tree.sync_children(parent);
+        Ok(result)
+    }
+
+    pub fn remove_subtree(&mut self, id: NodeId) -> Result<(), TreeEditError> {
+        if self.tree.get(id).is_none() {
+            return Err(TreeEditError::StaleNode);
+        }
+        let removed =
+            |slot: Option<NodeId>, tree: &Tree| slot.is_some_and(|node| tree.is_within(node, id));
+        if removed(self.focus, &self.tree) {
+            self.set_focus(None);
+        }
+        if removed(self.capture, &self.tree) {
+            self.capture = None;
+        }
+        if removed(self.pressed, &self.tree) {
+            self.pressed = None;
+        }
+        if removed(self.hovered, &self.tree) {
+            self.hovered = None;
+        }
+        if removed(self.modal_return_focus, &self.tree) {
+            self.modal_return_focus = None;
+        }
+        self.tree.remove(id);
+        self.ime_allowed = false;
+        self.a11y_dirty = true;
+        Ok(())
+    }
+
+    pub fn detach_to(&mut self, id: NodeId, parking: NodeId) -> Result<(), TreeEditError> {
+        if self.tree.get(id).is_none() || self.tree.get(parking).is_none() {
+            return Err(TreeEditError::StaleNode);
+        }
+        let detached =
+            |slot: Option<NodeId>, tree: &Tree| slot.is_some_and(|node| tree.is_within(node, id));
+        if detached(self.focus, &self.tree) {
+            self.set_focus(None);
+        }
+        if detached(self.capture, &self.tree) {
+            self.capture = None;
+        }
+        if detached(self.pressed, &self.tree) {
+            self.pressed = None;
+        }
+        if detached(self.hovered, &self.tree) {
+            self.hovered = None;
+        }
+        if self.tree.node(id).parent != Some(parking) {
+            let index = self.tree.children(parking).len();
+            self.tree.reparent(id, parking, index)?;
+        }
+        self.ime_allowed = false;
+        self.a11y_dirty = true;
+        Ok(())
+    }
+
+    pub fn set_node_text_value(&mut self, id: NodeId, value: &str) -> Result<(), TreeEditError> {
+        if self.tree.get(id).is_none() {
+            return Err(TreeEditError::StaleNode);
+        }
+        self.dispatch_to(id, &UiEvent::SetValue(value.to_owned()));
+        Ok(())
     }
 
     pub fn set_scale(&mut self, scale: f32) {

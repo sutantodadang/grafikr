@@ -6,6 +6,7 @@ mod combo;
 mod containers;
 mod controls;
 mod data_grid;
+mod dynamic;
 mod image;
 mod modal;
 mod popup;
@@ -18,13 +19,17 @@ mod tooltip;
 mod tree_view;
 
 pub use button::{Button, ButtonVariant, ClickEvent, button};
-pub use canvas::{Canvas, canvas};
+pub use canvas::{Canvas, CanvasPainter, canvas};
 pub use combo::{ComboBox, combo_box};
 pub use containers::{Column, Grid, Row, Stack, column, grid, row, stack};
 pub use controls::{
     Checkbox, ProgressBar, Radio, Slider, Switch, checkbox, progress, radio, slider, switch,
 };
 pub use data_grid::{DataGrid, GridColumn, data_grid};
+pub use dynamic::{
+    DynamicEvent, DynamicValue, LayoutKind, MountedWidget, WidgetError, WidgetPatch, WidgetSpec,
+    mount,
+};
 pub use image::{Image, image};
 pub use modal::{Modal, modal};
 pub use popup::{Popup, popup};

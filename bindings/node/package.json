@@ -1,0 +1,20 @@
+{
+  "name": "@grafikr/ui",
+  "version": "1.1.0",
+  "description": "Node.js desktop client for Grafikr",
+  "type": "module",
+  "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}},
+  "scripts": {"build": "tsc -p tsconfig.json", "test": "node --test test/*.test.mjs"},
+  "engines": {"node": ">=24"},
+  "optionalDependencies": {
+    "@grafikr/runtime-win32-x64": "1.1.0",
+    "@grafikr/runtime-win32-arm64": "1.1.0",
+    "@grafikr/runtime-linux-x64": "1.1.0",
+    "@grafikr/runtime-linux-arm64": "1.1.0",
+    "@grafikr/runtime-darwin-x64": "1.1.0",
+    "@grafikr/runtime-darwin-arm64": "1.1.0"
+  },
+  "devDependencies": {"@types/node": "^24.0.0", "typescript": "~5.8.3"},
+  "license": "AGPL-3.0-only",
+  "files": ["dist", "examples", "README.md"]
+}

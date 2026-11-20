@@ -1,0 +1,5 @@
+{"id":"hello-1","op":"hello","args":{"protocol_major":1,"protocol_minor":0,"sdk_version":"1.1.0"}}
+{"id":"tree-create","op":"node.create","args":{"window":"1","widget":"TreeView","properties":{"roots":[{"key":"root","label":"Root","children":[{"key":"child","label":"Child"}]}],"height":180}}}
+{"id":"tree-select-subscribe","op":"event.subscribe","args":{"node":"2","event":"select"}}
+{"id":"tree-root-update","op":"property.update","args":{"node":"2","properties":{"roots":[{"key":"root","label":"Updated","children":[{"key":"child","label":"Child"}]}]}}}
+{"id":"transition","op":"transition.start","args":{"state":"3","to":{"type":"f64","value":1.0},"duration_ms":120,"easing":"ease_out_cubic"}}

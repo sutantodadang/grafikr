@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Cross-language implementation checkpoint
+
+- Add a shared retained-UI bridge, versioned C ABI, JSON Lines host transport,
+  and SDK sources for C, C++, Python, JavaScript/TypeScript, C#/.NET, Go,
+  Java/Kotlin, Swift, Dart, Ruby, PHP, and Lua.
+- Add protocol/widget contract fixtures, runtime/package tooling, and evidence
+  gates for SDK, platform, GUI, hardware, accessibility, and performance work.
+- Add the Swift bundle installer API and CLI with manifest/hash validation,
+  atomic cache installation, and bundled license notices.
+- Local Windows x64 and Linux x64 package/runtime artifacts exist, but the
+  six-target release matrix, complete installed GUI matrix, hardware checks,
+  and registry publication remain incomplete. See
+  `docs/bindings/support-matrix.md` for the current evidence boundary.
+
 ## 1.0.0 — 2026-10-28
 
 First stable API release, tested on Windows/D3D12. Linux, macOS, and other GPU

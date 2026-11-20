@@ -26,6 +26,6 @@ pub use scroll::ScrollState;
 pub use signal::{BoundText, Signal, bind, observe};
 pub use style::{Align, CursorIcon, Direction, Interaction, Style, Theme};
 pub use text::{TextCache, TextEngine, TextShape, push_layout, push_layout_masked, shape_key};
-pub use tree::{Node, NodeId, Tree, Widget};
+pub use tree::{Node, NodeId, Tree, TreeEditError, Widget};
 pub use ui::{EventCx, MeasureCx, Outcome, PaintCx, Ui, UiStats};
 pub use view::{IntoViews, MountCx, View};

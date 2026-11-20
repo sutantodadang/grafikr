@@ -1,5 +1,6 @@
 //! Virtualized data grid: fixed columns, visible rows only.
 
+use std::cell::Cell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -31,17 +32,43 @@ impl GridColumn {
 
 type RowFn = Rc<dyn Fn(usize) -> Vec<String>>;
 type SelectFn = Rc<dyn Fn(usize)>;
+type VisibleFn = Rc<dyn Fn(usize, u32) -> bool>;
 
 pub struct DataGrid {
     columns: Vec<GridColumn>,
-    rows: usize,
-    row_height: f32,
+    rows: Rc<Cell<usize>>,
+    row_height: Rc<Cell<f32>>,
     height: f32,
     width: Option<f32>,
     row: RowFn,
     on_select: Option<SelectFn>,
-    selected: Option<usize>,
+    selected: Rc<Cell<Option<usize>>>,
     label: String,
+    on_visible: Option<VisibleFn>,
+    requested: Rc<Cell<Option<(usize, usize)>>>,
+    state: Rc<ScrollState>,
+}
+
+#[derive(Clone)]
+pub(crate) struct DataGridController {
+    rows: Rc<Cell<usize>>,
+    row_height: Rc<Cell<f32>>,
+    selected: Rc<Cell<Option<usize>>>,
+    requested: Rc<Cell<Option<(usize, usize)>>>,
+    state: Rc<ScrollState>,
+}
+impl DataGridController {
+    pub(crate) fn set_metadata(&self, rows: usize, row_height: f32) {
+        self.rows.set(rows);
+        self.row_height.set(row_height);
+        self.selected
+            .set(self.selected.get().filter(|index| *index < rows));
+        self.state.set_content(rows as f32 * row_height);
+        self.requested.set(None);
+    }
+    pub(crate) fn refresh(&self) {
+        self.requested.set(None);
+    }
 }
 
 pub fn data_grid(
@@ -52,18 +79,37 @@ pub fn data_grid(
 ) -> DataGrid {
     DataGrid {
         columns: columns.into_iter().collect(),
-        rows,
-        row_height: row_height.max(18.0),
+        rows: Rc::new(Cell::new(rows)),
+        row_height: Rc::new(Cell::new(row_height.max(18.0))),
         height: 320.0,
         width: None,
         row: Rc::new(row),
         on_select: None,
-        selected: None,
+        selected: Rc::new(Cell::new(None)),
         label: "Data grid".to_owned(),
+        on_visible: None,
+        requested: Rc::new(Cell::new(None)),
+        state: Rc::new(ScrollState::new()),
     }
 }
 
 impl DataGrid {
+    pub(crate) fn controller(&self) -> DataGridController {
+        DataGridController {
+            rows: self.rows.clone(),
+            row_height: self.row_height.clone(),
+            selected: self.selected.clone(),
+            requested: self.requested.clone(),
+            state: self.state.clone(),
+        }
+    }
+    pub(crate) fn on_visible_range(
+        mut self,
+        handler: impl Fn(usize, u32) -> bool + 'static,
+    ) -> Self {
+        self.on_visible = Some(Rc::new(handler));
+        self
+    }
     pub fn height(mut self, height: f32) -> Self {
         self.height = height;
         self
@@ -74,8 +120,8 @@ impl DataGrid {
         self
     }
 
-    pub fn selected(mut self, index: usize) -> Self {
-        self.selected = Some(index);
+    pub fn selected(self, index: usize) -> Self {
+        self.selected.set(Some(index));
         self
     }
 
@@ -100,23 +146,25 @@ impl View for DataGrid {
             clip: true,
             ..Style::default()
         });
-        let state = ScrollState::new();
-        state.set_content(self.rows as f32 * self.row_height);
+        self.state
+            .set_content(self.rows.get() as f32 * self.row_height.get());
         cx.set_widget(
             node,
             DataGridWidget {
                 columns: self.columns.clone(),
-                rows: self.rows,
-                row_height: self.row_height,
+                rows: self.rows.clone(),
+                row_height: self.row_height.clone(),
                 row: self.row.clone(),
                 on_select: self.on_select.clone(),
-                selected: self.selected,
-                state,
+                selected: self.selected.clone(),
+                state: self.state.clone(),
                 header_caches: Vec::new(),
                 cell_caches: HashMap::new(),
                 cache_width: 0.0,
                 dragging: false,
                 label: self.label.clone(),
+                on_visible: self.on_visible.clone(),
+                requested: self.requested.clone(),
             },
         );
         node
@@ -125,20 +173,29 @@ impl View for DataGrid {
 
 struct DataGridWidget {
     columns: Vec<GridColumn>,
-    rows: usize,
-    row_height: f32,
+    rows: Rc<Cell<usize>>,
+    row_height: Rc<Cell<f32>>,
     row: RowFn,
     on_select: Option<SelectFn>,
-    selected: Option<usize>,
-    state: ScrollState,
+    selected: Rc<Cell<Option<usize>>>,
+    state: Rc<ScrollState>,
     header_caches: Vec<TextCache>,
     cell_caches: HashMap<u64, TextCache>,
     cache_width: f32,
     dragging: bool,
     label: String,
+    on_visible: Option<VisibleFn>,
+    requested: Rc<Cell<Option<(usize, usize)>>>,
 }
 
 impl DataGridWidget {
+    fn row_count(&self) -> usize {
+        self.rows.get()
+    }
+    fn row_size(&self) -> f32 {
+        self.row_height.get()
+    }
+
     fn content_rect(&self, rect: Rect) -> Rect {
         Rect::new(
             rect.x,
@@ -153,21 +210,24 @@ impl DataGridWidget {
     }
 
     fn visible_range(&self, viewport: f32) -> (usize, usize) {
-        if self.rows == 0 {
+        let rows = self.row_count();
+        let row_height = self.row_size();
+        if rows == 0 {
             return (0, 0);
         }
-        let first = (self.state.offset() / self.row_height).floor() as usize;
-        let count = (viewport / self.row_height).ceil() as usize + 1;
-        (first.min(self.rows - 1), (first + count).min(self.rows))
+        let first = (self.state.offset() / row_height).floor() as usize;
+        let count = (viewport / row_height).ceil() as usize + 1;
+        (first.min(rows - 1), (first + count).min(rows))
     }
 
     fn select(&mut self, index: usize, cx: &mut EventCx) {
-        if self.rows == 0 {
+        let rows = self.row_count();
+        if rows == 0 {
             return;
         }
-        let index = index.min(self.rows - 1);
-        if self.selected != Some(index) {
-            self.selected = Some(index);
+        let index = index.min(rows - 1);
+        if self.selected.get() != Some(index) {
+            self.selected.set(Some(index));
             if let Some(handler) = &self.on_select {
                 handler(index);
             }
@@ -176,8 +236,9 @@ impl DataGridWidget {
     }
 
     fn scroll_to(&mut self, index: usize, viewport: f32, cx: &mut EventCx) {
-        let top = index as f32 * self.row_height;
-        let bottom = top + self.row_height;
+        let row_height = self.row_size();
+        let top = index as f32 * row_height;
+        let bottom = top + row_height;
         let offset = self.state.offset();
         if top < offset {
             self.state.set_offset(top);
@@ -193,8 +254,8 @@ impl DataGridWidget {
         if !content.contains(pos) {
             return None;
         }
-        let row = ((pos.y - content.y + self.state.offset()) / self.row_height).floor() as usize;
-        (row < self.rows).then_some(row)
+        let row = ((pos.y - content.y + self.state.offset()) / self.row_size()).floor() as usize;
+        (row < self.row_count()).then_some(row)
     }
 }
 
@@ -206,7 +267,8 @@ impl Widget for DataGridWidget {
     fn paint(&mut self, cx: &mut PaintCx, rect: Rect) {
         let content = self.content_rect(rect);
         self.state.set_viewport(content.height);
-        self.state.set_content(self.rows as f32 * self.row_height);
+        let row_height = self.row_size();
+        self.state.set_content(self.row_count() as f32 * row_height);
         if self.header_caches.len() != self.columns.len() {
             self.header_caches = self.columns.iter().map(|_| TextCache::default()).collect();
         }
@@ -248,15 +310,22 @@ impl Widget for DataGridWidget {
         );
 
         let (first, end) = self.visible_range(content.height);
+        if let Some(on_visible) = &self.on_visible
+            && self.requested.get() != Some((first, end))
+            && on_visible(first, (end - first) as u32)
+        {
+            self.requested.set(Some((first, end)));
+        }
         let offset = self.state.offset();
+        let selected = self.selected.get();
         for index in first..end {
-            let row_y = content.y + index as f32 * self.row_height - offset;
-            let row_rect = Rect::new(rect.x, row_y, rect.width, self.row_height);
+            let row_y = content.y + index as f32 * row_height - offset;
+            let row_rect = Rect::new(rect.x, row_y, rect.width, row_height);
             let row_clip = cx
                 .clip
                 .map(|clip| clip.intersect(row_rect))
                 .unwrap_or(row_rect);
-            let background = if Some(index) == self.selected {
+            let background = if Some(index) == selected {
                 cx.theme.accent.with_alpha(55)
             } else if index % 2 == 0 {
                 cx.theme.surface.with_alpha(120)
@@ -282,7 +351,7 @@ impl Widget for DataGridWidget {
                         &shape.layout,
                         Point::new(
                             cell_x + PADDING_X,
-                            row_y + (self.row_height - shape.height) * 0.5,
+                            row_y + (row_height - shape.height) * 0.5,
                         ),
                         Some(row_clip),
                     );
@@ -333,19 +402,18 @@ impl Widget for DataGridWidget {
                 EventStatus::Handled
             }
             UiEvent::KeyDown { key, .. } if cx.state.focused => {
-                let page = (content.height / self.row_height).floor().max(1.0) as usize;
+                let page = (content.height / self.row_size()).floor().max(1.0) as usize;
+                let selected = self.selected.get();
+                let rows = self.row_count();
                 let next = match key {
-                    Key::Up => self.selected.map(|i| i.saturating_sub(1)).unwrap_or(0),
-                    Key::Down => self
-                        .selected
-                        .map(|i| (i + 1).min(self.rows.saturating_sub(1)))
+                    Key::Up => selected.map(|i| i.saturating_sub(1)).unwrap_or(0),
+                    Key::Down => selected
+                        .map(|i| (i + 1).min(rows.saturating_sub(1)))
                         .unwrap_or(0),
-                    Key::PageUp => self.selected.unwrap_or(0).saturating_sub(page),
-                    Key::PageDown => {
-                        (self.selected.unwrap_or(0) + page).min(self.rows.saturating_sub(1))
-                    }
+                    Key::PageUp => selected.unwrap_or(0).saturating_sub(page),
+                    Key::PageDown => (selected.unwrap_or(0) + page).min(rows.saturating_sub(1)),
                     Key::Home => 0,
-                    Key::End => self.rows.saturating_sub(1),
+                    Key::End => rows.saturating_sub(1),
                     _ => return EventStatus::Ignored,
                 };
                 self.select(next, cx);

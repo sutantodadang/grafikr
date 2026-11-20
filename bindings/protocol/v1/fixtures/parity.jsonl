@@ -1,0 +1,49 @@
+{"id":"1","op":"hello","args":{"protocol_major":1,"protocol_minor":0,"sdk_version":"parity-test"}}
+{"id":"2","op":"state.create","args":{"value":{"type":"i64","value":"-9223372036854775808"}}}
+{"id":"3","op":"state.get","args":{"state":"1"}}
+{"id":"4","op":"state.set","args":{"state":"1","value":{"type":"i64","value":"9223372036854775807"}}}
+{"id":"5","op":"state.get","args":{"state":"1"}}
+{"id":"6","op":"state.destroy","args":{"state":"1"}}
+{"id":"7","op":"state.get","args":{"state":"1"}}
+{"id":"8","op":"state.create","args":{"value":{"type":"bool","value":true}}}
+{"id":"9","op":"state.get","args":{"state":"2"}}
+{"id":"10","op":"window.close","args":{"window":"2"}}
+{"id":"11","op":"state.set","args":{"state":"2","value":{"type":"bool","value":false}}}
+{"id":"12","op":"state.get","args":{"state":"2"}}
+{"id":"13","op":"state.create","args":{"value":{"type":"f64","value":0.0}}}
+{"id":"14","op":"transition.start","args":{"state":"3","to":{"type":"f64","value":1.0},"duration_ms":0,"easing":"linear"}}
+{"id":"15","op":"state.get","args":{"state":"3"}}
+{"id":"16","op":"window.create","args":{"title":"Parity window","width":320,"height":200,"theme":"dark"}}
+{"id":"17","op":"node.create","args":{"window":"4","widget":"Text","properties":{"text":"before","size":16,"color":"#ffffff"}}}
+{"id":"18","op":"node.attach","args":{"node":"7","parent":"5"}}
+{"id":"19","op":"property.update","args":{"node":"7","properties":{"text":"after"}}}
+{"id":"20","op":"image.begin","args":{"width":1,"height":1,"byte_length":4}}
+{"id":"21","op":"image.chunk","args":{"upload":"8","offset":0,"data":"AAD/AA=="}}
+{"id":"22","op":"image.finalize","args":{"upload":"8"}}
+{"id":"23","op":"node.create","args":{"window":"4","widget":"Canvas","properties":{"commands":[],"label":"parity canvas","width":80,"height":60}}}
+{"id":"24","op":"node.attach","args":{"node":"10","parent":"5"}}
+{"id":"25","op":"canvas.update","args":{"node":"10","commands":[{"kind":"rect","rect":{"x":0,"y":0,"width":20,"height":10},"color":"#336699","radius":0}]}}
+{"id":"26","op":"image.destroy","args":{"image":"9"}}
+{"id":"27","op":"node.destroy","args":{"node":"10"}}
+{"id":"28","op":"node.create","args":{"window":"4","widget":"VirtualList","properties":{"row_count":50000,"row_height":24,"height":120}}}
+{"id":"29","op":"node.attach","args":{"node":"11","parent":"5"}}
+{"id":"30","op":"event.subscribe","args":{"node":"11","event":"data.request"}}
+{"id":"31","op":"collection.create","args":{"node":"11","row_count":50000,"row_height":24,"columns":["label"]}}
+{"id":"32","op":"collection.update","args":{"node":"11","metadata":{"row_count":49999,"row_height":24,"columns":["label"]}}}
+{"id":"33","op":"data.provide","args":{"node":"11","revision":"1","request":"stale","start":0,"rows":[]}}
+{"id":"34","op":"node.destroy","args":{"node":"11"}}
+{"id":"35","op":"node.create","args":{"window":"4","widget":"TreeView","properties":{"roots":[{"key":"root","label":"Root","children":[{"key":"leaf","label":"Leaf","children":[]}]}],"selected":"leaf","width":180,"height":120}}}
+{"id":"36","op":"node.attach","args":{"node":"13","parent":"5"}}
+{"id":"37","op":"property.update","args":{"node":"13","properties":{"selected":"root"}}}
+{"id":"38","op":"property.update","args":{"node":"13","properties":{"roots":[{"key":"root","label":"Root updated","children":[{"key":"leaf","label":"Leaf","children":[]}]}]}}}
+{"id":"39","op":"node.destroy","args":{"node":"13"}}
+{"id":"40","op":"property.update","args":{"node":"7","properties":{"text":"updated"}}}
+{"id":"41","op":"node.detach","args":{"node":"7"}}
+{"id":"42","op":"node.attach","args":{"node":"7","parent":"5"}}
+{"id":"43","op":"node.destroy","args":{"node":"7"}}
+{"id":"44","op":"node.attach","args":{"node":"7","parent":"5"}}
+{"id":"45","op":"window.update","args":{"window":"4","title":"Parity window updated","width":400,"height":240,"theme":"light"}}
+{"id":"46","op":"window.close","args":{"window":"4"}}
+{"id":"47","op":"state.destroy","args":{"state":"2"}}
+{"id":"48","op":"state.destroy","args":{"state":"3"}}
+{"id":"49","op":"shutdown","args":{}}

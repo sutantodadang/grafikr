@@ -1,0 +1,371 @@
+name: Runtime bundles
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  native-bundle:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            runner: windows-2025
+          - target: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-22.04
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-22.04-arm
+          - target: x86_64-apple-darwin
+            runner: macos-15-intel
+          - target: aarch64-apple-darwin
+            runner: macos-14
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Node SDK development dependencies
+        run: rtk npm ci --prefix bindings/node
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: tryswift/setup-swift@v1
+        with:
+          swift-version: "6.4.1"
+          windows-toolchain-variant: ${{ matrix.target == 'aarch64-pc-windows-msvc' && 'noasserts' || 'asserts' }}
+          windows-minimal: true
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.10.0"
+      - uses: step-security/msvc-dev-cmd@v1
+      - uses: leafo/gh-actions-lua@v13
+        with:
+          luaVersion: "5.4.9"
+      - uses: leafo/gh-actions-luarocks@v6
+        with:
+          luaRocksVersion: "3.13.0"
+      - uses: ruby/setup-ruby@v1
+        if: matrix.target != 'aarch64-pc-windows-msvc'
+        with:
+          ruby-version: "3.4"
+      - uses: shivammathur/setup-php@v2
+        if: matrix.target != 'aarch64-pc-windows-msvc'
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+      - name: Install RTK
+        shell: bash
+        run: cargo install --git https://github.com/rtk-ai/rtk --rev e288a18c04452fd26192f59132e5324a8bb6924d --locked rtk
+      - name: Install manifest validator
+        run: rtk proxy python -m pip install "cmake>=3.28,<4" -r scripts/requirements-bindings.txt
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          rtk proxy sudo apt-get update
+          rtk proxy sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev \
+            libxkbcommon-x11-dev libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev \
+            libfontconfig1-dev libssl-dev xvfb xauth x11-utils openbox mesa-vulkan-drivers
+      - name: Install Lua crypto dependency (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $triplet = if ($env:RUNNER_ARCH -eq "ARM64") { "arm64-windows" } else { "x64-windows" }
+          rtk proxy "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install "openssl:$triplet"
+          rtk proxy python -c 'import os; root=os.path.join(os.environ["VCPKG_INSTALLATION_ROOT"],"installed",os.environ["RUNNER_ARCH"].lower()+"-windows"); open(os.environ["GITHUB_ENV"],"a",encoding="utf-8").write("CRYPTO_DIR="+root+chr(10))'
+      - name: Install Lua crypto dependency (macOS)
+        if: runner.os == 'macOS'
+        run: rtk proxy brew install openssl@3
+      - name: Install Lua SDK modules
+        run: |
+          rtk proxy luarocks install luaossl
+          rtk proxy luarocks install dkjson 2.11-1
+          rtk proxy luarocks install luv 1.53.0-1
+      - name: Build and install Lua SDK rock
+        working-directory: bindings/lua
+        run: rtk proxy luarocks make grafikr-1.1.0-1.rockspec
+      - name: Test bundle validation
+        run: rtk proxy python -m unittest discover -s scripts/tests -p test_runtime_bundle.py -v
+      - name: Test SDK coverage gates
+        run: rtk proxy python -m unittest scripts.tests.test_sdk_coverage -v
+      - name: Build native bundle and C/C++ harnesses
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            rtk proxy mkdir -p /tmp/grafikr-runtime
+            rtk proxy chmod 700 /tmp/grafikr-runtime
+            rtk proxy Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp -ac >/tmp/grafikr-xvfb.log 2>&1 &
+            rtk proxy sleep 2
+            export DISPLAY=:99 XDG_RUNTIME_DIR=/tmp/grafikr-runtime
+            rtk proxy openbox >/tmp/grafikr-openbox.log 2>&1 &
+            rtk proxy sleep 2
+            rtk proxy python scripts/build_runtime.py --target "${{ matrix.target }}" --out target/runtime/current
+          else
+            rtk proxy python scripts/build_runtime.py --target "${{ matrix.target }}" --out target/runtime/current
+          fi
+      - name: Build Python wheel with the matching runtime
+        run: rtk proxy python -m scripts.package_python --bundle target/runtime/current --out target/packages/python
+      - name: Build Node runtime package with the matching host
+        run: rtk proxy python -m scripts.package_node_runtime --bundle target/runtime/current --out target/packages/node-runtime
+      - name: Build the shared fixture host
+        run: rtk proxy cargo build -p grafikr-conformance --bin fixture-host
+      - name: Run the Swift SDK unit suite
+        run: rtk proxy python -m scripts.run_binding_checks --sdk swift --suite unit --bundle target/runtime/current --out .artifacts/bindings/swift-unit.json
+      - name: Run the Dart SDK unit suite
+        run: rtk proxy python -m scripts.run_binding_checks --sdk dart --suite unit --bundle target/runtime/current --out .artifacts/bindings/dart-unit.json
+      - name: Run the Lua SDK unit suite
+        env:
+          GRAFIKR_LUA_REQUIRE_OPENSSL: "1"
+        run: rtk proxy python -m scripts.run_binding_checks --sdk lua --suite unit --bundle target/runtime/current --out .artifacts/bindings/lua-unit.json
+      - name: Run every SDK contract suite
+        env:
+          GRAFIKR_LUA54: lua
+        run: rtk proxy python -m scripts.run_binding_checks --sdk all --suite contract --bundle target/runtime/current --fixture-host ${{ runner.os == 'Windows' && 'target/debug/fixture-host.exe' || 'target/debug/fixture-host' }} --out .artifacts/bindings/all-contract-${{ matrix.target }}.json
+      - name: Run the Ruby SDK suite
+        if: matrix.target != 'aarch64-pc-windows-msvc'
+        run: rtk proxy python -m scripts.run_binding_checks --sdk ruby --suite unit --bundle target/runtime/current --out .artifacts/bindings/ruby-unit.json
+      - name: Validate the PHP Composer manifest and run its SDK suite
+        if: matrix.target != 'aarch64-pc-windows-msvc'
+        run: rtk proxy composer validate --strict --no-check-version --working-dir bindings/php
+      - name: Run the PHP SDK suite
+        if: matrix.target != 'aarch64-pc-windows-msvc'
+        run: rtk proxy python -m scripts.run_binding_checks --sdk php --suite unit --bundle target/runtime/current --out .artifacts/bindings/php-unit.json
+      - name: Run the .NET SDK harness
+        run: rtk proxy dotnet run --project bindings/dotnet/Grafikr.Client.Tests/Grafikr.Client.Tests.csproj -c Release
+      - name: Run the Go SDK tests
+        run: rtk proxy python -m scripts.run_binding_checks --sdk go --suite unit --bundle target/runtime/current --out .artifacts/bindings/go-unit.json
+      - name: Run Java and Kotlin SDK checks
+        run: rtk proxy java -classpath bindings/jvm/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p bindings/jvm test --no-daemon
+      - name: Publish and verify Java and Kotlin Maven consumers
+        run: rtk proxy python -m scripts.verify_jvm_package --bundle target/runtime/current --out target/packages/jvm-maven
+      - name: Install and smoke-test Python wheel
+        run: rtk proxy python scripts/run_binding_checks.py --sdk python --suite unit --bundle target/runtime/current --out .artifacts/bindings/python-unit.json
+      - name: Install and smoke-test Node SDK and runtime packages
+        run: rtk proxy python -m scripts.verify_node_package --bundle target/runtime/current --runtime-package target/packages/node-runtime --out target/packages/node-sdk
+      - name: Pack NuGet SDK and smoke-test a clean consumer
+        run: rtk proxy python -m scripts.verify_dotnet_package --bundle target/runtime/current --out target/packages/dotnet
+      - name: Verify bundled host version (Windows)
+        if: runner.os == 'Windows'
+        run: rtk proxy target/runtime/current/bin/grafikr-host.exe --version
+      - name: Verify bundled host version (Unix)
+        if: runner.os != 'Windows'
+        run: rtk proxy target/runtime/current/bin/grafikr-host --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-runtime-${{ matrix.target }}
+          path: target/runtime/current
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-python-wheel-${{ matrix.target }}
+          path: target/packages/python/*.whl
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-node-runtime-package-${{ matrix.target }}
+          path: target/packages/node-runtime/*.tgz
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-node-sdk-${{ matrix.target }}
+          path: target/packages/node-sdk/*.tgz
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-dotnet-package-${{ matrix.target }}
+          path: target/packages/dotnet/*.nupkg
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-go-evidence-${{ matrix.target }}
+          path: .artifacts/bindings/go-unit.json
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-go-module-${{ matrix.target }}
+          path: target/packages/go/**
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-jvm-maven-${{ matrix.target }}
+          path: target/packages/jvm-maven/**
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-python-evidence-${{ matrix.target }}
+          path: .artifacts/bindings/python-unit.json
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: matrix.target != 'aarch64-pc-windows-msvc'
+        with:
+          name: grafikr-ruby-evidence-${{ matrix.target }}
+          path: .artifacts/bindings/ruby-unit.json
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: matrix.target != 'aarch64-pc-windows-msvc'
+        with:
+          name: grafikr-php-evidence-${{ matrix.target }}
+          path: .artifacts/bindings/php-unit.json
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-sdk-evidence-${{ matrix.target }}
+          path: .artifacts/bindings/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  package-matrix:
+    needs: native-bundle
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: tryswift/setup-swift@v1
+        with:
+          swift-version: "6.4.1"
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "3.10.0"
+      - uses: leafo/gh-actions-lua@v13
+        with:
+          luaVersion: "5.4.9"
+      - uses: leafo/gh-actions-luarocks@v6
+        with:
+          luaRocksVersion: "3.13.0"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+      - name: Install RTK
+        shell: bash
+        run: cargo install --git https://github.com/rtk-ai/rtk --rev e288a18c04452fd26192f59132e5324a8bb6924d --locked rtk
+      - name: Install Linux GUI runtime dependencies
+        run: |
+          rtk proxy sudo apt-get update
+          rtk proxy sudo apt-get install -y libxkbcommon-x11-0 libwayland-client0 libx11-6 \
+            libxi6 libxcursor1 libxrandr2 libxinerama1 libfontconfig1 libssl-dev xvfb
+      - name: Install Lua SDK modules for installed consumers
+        env:
+          GRAFIKR_LUA54: lua
+          GRAFIKR_LUA54_MODULES: ${{ runner.temp }}/grafikr-lua
+        run: |
+          rtk proxy mkdir -p "$GRAFIKR_LUA54_MODULES"
+          rtk proxy luarocks --lua-version=5.4 --tree "$GRAFIKR_LUA54_MODULES" install luaossl
+          rtk proxy luarocks --lua-version=5.4 --tree "$GRAFIKR_LUA54_MODULES" install dkjson 2.11-1
+          rtk proxy luarocks --lua-version=5.4 --tree "$GRAFIKR_LUA54_MODULES" install luv 1.53.0-1
+          rtk proxy python -c 'import os; open(os.environ["GITHUB_ENV"],"a",encoding="utf-8").write("GRAFIKR_LUA54="+os.environ["GRAFIKR_LUA54"]+chr(10)+"GRAFIKR_LUA54_MODULES="+os.environ["GRAFIKR_LUA54_MODULES"]+chr(10))'
+      - name: Install package verification dependencies
+        run: rtk proxy python -m pip install "cmake>=3.28,<4" -r scripts/requirements-bindings.txt
+      - name: Install Node SDK development dependencies
+        run: rtk npm ci --prefix bindings/node
+      - name: Download Windows x64 runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: grafikr-runtime-x86_64-pc-windows-msvc
+          path: target/runtime/releases/x86_64-pc-windows-msvc
+      - name: Download Windows ARM64 runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: grafikr-runtime-aarch64-pc-windows-msvc
+          path: target/runtime/releases/aarch64-pc-windows-msvc
+      - name: Download Linux x64 runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: grafikr-runtime-x86_64-unknown-linux-gnu
+          path: target/runtime/releases/x86_64-unknown-linux-gnu
+      - name: Download Linux ARM64 runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: grafikr-runtime-aarch64-unknown-linux-gnu
+          path: target/runtime/releases/aarch64-unknown-linux-gnu
+      - name: Download macOS x64 runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: grafikr-runtime-x86_64-apple-darwin
+          path: target/runtime/releases/x86_64-apple-darwin
+      - name: Download macOS ARM64 runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: grafikr-runtime-aarch64-apple-darwin
+          path: target/runtime/releases/aarch64-apple-darwin
+      - name: Build the complete package matrix
+        run: rtk proxy python -m scripts.package_bindings --version 1.1.0 --runtime-root target/runtime/releases --out target/packages/release
+      - name: Verify package hashes and target coverage
+        run: rtk proxy python -m scripts.package_bindings --version 1.1.0 --runtime-root target/runtime/releases --out target/packages/release --check
+      - name: Install Ruby and PHP packages into clean consumers
+        run: rtk proxy python -m scripts.verify_ruby_php_packages --package-root target/packages/release
+      - name: Install X11 input automation
+        run: rtk sudo apt-get update && rtk sudo apt-get install --yes xdotool xclip
+      - name: Build clean installed C and C++ consumers and run GUI scenarios
+        run: |
+          rtk proxy xvfb-run -a python -m scripts.run_cmake_binding_tests --project c --runtime target/runtime/releases/x86_64-unknown-linux-gnu --installed-consumer-only --installed-scenarios
+      - name: Build the installed-scenario fixture host
+        run: rtk proxy cargo build -p grafikr-conformance --bin fixture-host
+      - name: Run the installed Dart package scenarios
+        run: rtk proxy xvfb-run -a python -m scripts.run_binding_checks --sdk dart --suite installed --bundle target/runtime/releases/x86_64-unknown-linux-gnu --fixture-host target/debug/fixture-host --package-root target/packages/release --out .artifacts/bindings/dart-installed-linux-x64.json
+      - name: Run the installed Swift package scenarios
+        run: rtk proxy xvfb-run -a python -m scripts.run_binding_checks --sdk swift --suite installed --bundle target/runtime/releases/x86_64-unknown-linux-gnu --fixture-host target/debug/fixture-host --package-root target/packages/release --out .artifacts/bindings/swift-installed-linux-x64.json
+      - name: Run the installed Lua package scenarios
+        env:
+          GRAFIKR_LUA54: lua
+          GRAFIKR_LUA54_MODULES: ${{ runner.temp }}/grafikr-lua
+        run: rtk proxy xvfb-run -a python -m scripts.run_binding_checks --sdk lua --suite installed --bundle target/runtime/releases/x86_64-unknown-linux-gnu --fixture-host target/debug/fixture-host --package-root target/packages/release --out .artifacts/bindings/lua-installed-linux-x64.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-installed-scenario-evidence
+          path: .artifacts/bindings/*-installed-linux-x64.json
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-cross-language-packages
+          path: target/packages/release
+          if-no-files-found: error
+          retention-days: 14

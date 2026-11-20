@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: October 28, 2026. Version 1.0.0. Tested on Windows 11 with a GPU
+Last updated: November 20, 2026. Version 1.1.0. Tested on Windows 11 with a GPU
 through D3D12. Wayland/X11/macOS and other GPU vendors have not been verified on
 real hardware.
 
@@ -16,6 +16,14 @@ real hardware.
 | M5 — Alpha/optimization | done* | multi-window, animation scheduler + Transition, glyph/image caches, shadow, batching, benchmarks, `UiStats`/`RendererStats`; RSS profiling still missing |
 | M6 — Cross-platform beta | partial | grid, ComboBox, 50k DataGrid, TreeView, and golden images exist; Wayland/X11/macOS and the GPU matrix are untested |
 | M7 — Toward 1.0 | partial | 1.0 API, SemVer, license, packaging metadata, tutorial, migration guide, CI benchmark, device-loss recovery; crates.io publication and hardware verification still missing |
+| M8 — Cross-language SDKs | partial | shared bridge, C ABI, IPC host, and all twelve SDK source groups exist; full target packages, installed GUI matrix, and hardware/accessibility evidence remain open |
+
+The cross-language checkpoint has Windows x64 unit and contract evidence for
+13 of 14 SDK rows; Swift's Windows toolchain cannot find `stdlib.h`. Local
+Windows x64 and Linux x64 bundles produce 40 packages with 41 pending target
+entries, and the source tree is dirty. The package index is not release-clean.
+See [`bindings/support-matrix.md`](bindings/support-matrix.md) for the exact
+evidence and remaining gates. No SDK package has been published.
 
 `*` means the core feature is complete, with the gaps recorded below.
 

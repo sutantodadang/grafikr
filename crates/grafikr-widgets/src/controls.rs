@@ -648,13 +648,13 @@ impl Widget for SliderWidget {
 // ------------------------------------------------------------------ Progress
 
 pub struct ProgressBar {
-    value: f32,
+    value: Signal<f32>,
     width: f32,
 }
 
 pub fn progress(value: f32) -> ProgressBar {
     ProgressBar {
-        value: value.clamp(0.0, 1.0),
+        value: Signal::new(value.clamp(0.0, 1.0)),
         width: 220.0,
     }
 }
@@ -663,6 +663,10 @@ impl ProgressBar {
     pub fn width(mut self, width: f32) -> Self {
         self.width = width;
         self
+    }
+
+    pub(crate) fn controller(&self) -> Signal<f32> {
+        self.value.clone()
     }
 }
 
@@ -673,13 +677,21 @@ impl View for ProgressBar {
             height: Some(8.0),
             ..Style::default()
         });
-        cx.set_widget(id, ProgressWidget { value: self.value });
+        let subscriber = track(&self.value, id, cx.runtime);
+        cx.set_widget(
+            id,
+            ProgressWidget {
+                value: self.value.clone(),
+                _subscriber: subscriber,
+            },
+        );
         id
     }
 }
 
 struct ProgressWidget {
-    value: f32,
+    value: Signal<f32>,
+    _subscriber: Rc<dyn Fn()>,
 }
 
 impl Widget for ProgressWidget {
@@ -689,10 +701,11 @@ impl Widget for ProgressWidget {
 
     fn paint(&mut self, cx: &mut PaintCx, rect: Rect) {
         cx.push_rect(rect, cx.theme.muted.with_alpha(60), 4.0);
+        let value = self.value.get();
         let filled = Rect::new(
             rect.x,
             rect.y,
-            rect.width * self.value.clamp(0.0, 1.0),
+            rect.width * value.clamp(0.0, 1.0),
             rect.height,
         );
         cx.push_rect(filled, cx.theme.accent, 4.0);
@@ -700,7 +713,7 @@ impl Widget for ProgressWidget {
 
     fn accessibility(&mut self, node: &mut accesskit::Node) {
         node.set_role(accesskit::Role::ProgressIndicator);
-        node.set_numeric_value((self.value * 100.0) as f64);
+        node.set_numeric_value((self.value.get() * 100.0) as f64);
         node.set_min_numeric_value(0.0);
         node.set_max_numeric_value(100.0);
     }

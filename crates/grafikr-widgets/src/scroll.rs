@@ -1,5 +1,6 @@
 //! Scroll container and virtualized list.
 
+use std::cell::Cell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -249,15 +250,41 @@ impl Widget for ScrollWidget {
 
 type LabelFn = Rc<dyn Fn(usize) -> String>;
 type SelectFn = Rc<dyn Fn(usize)>;
+type VisibleFn = Rc<dyn Fn(usize, u32) -> bool>;
 
 pub struct VirtualList {
-    rows: usize,
-    row_height: f32,
+    rows: Rc<Cell<usize>>,
+    row_height: Rc<Cell<f32>>,
     height: f32,
     width: Option<f32>,
     label: LabelFn,
     on_select: Option<SelectFn>,
-    selected: Option<usize>,
+    on_visible: Option<VisibleFn>,
+    requested: Rc<std::cell::Cell<Option<(usize, usize)>>>,
+    selected: Rc<Cell<Option<usize>>>,
+    state: Rc<ScrollState>,
+}
+
+#[derive(Clone)]
+pub(crate) struct VirtualListController {
+    rows: Rc<Cell<usize>>,
+    row_height: Rc<Cell<f32>>,
+    selected: Rc<Cell<Option<usize>>>,
+    requested: Rc<Cell<Option<(usize, usize)>>>,
+    state: Rc<ScrollState>,
+}
+impl VirtualListController {
+    pub(crate) fn set_metadata(&self, rows: usize, row_height: f32) {
+        self.rows.set(rows);
+        self.row_height.set(row_height);
+        self.selected
+            .set(self.selected.get().filter(|index| *index < rows));
+        self.state.set_content(rows as f32 * row_height);
+        self.requested.set(None);
+    }
+    pub(crate) fn refresh(&self) {
+        self.requested.set(None);
+    }
 }
 
 pub fn virtual_list(
@@ -266,17 +293,29 @@ pub fn virtual_list(
     label: impl Fn(usize) -> String + 'static,
 ) -> VirtualList {
     VirtualList {
-        rows,
-        row_height: row_height.max(1.0),
+        rows: Rc::new(Cell::new(rows)),
+        row_height: Rc::new(Cell::new(row_height.max(1.0))),
         height: 240.0,
         width: None,
         label: Rc::new(label),
         on_select: None,
-        selected: None,
+        on_visible: None,
+        requested: Rc::new(std::cell::Cell::new(None)),
+        selected: Rc::new(Cell::new(None)),
+        state: Rc::new(ScrollState::new()),
     }
 }
 
 impl VirtualList {
+    pub(crate) fn controller(&self) -> VirtualListController {
+        VirtualListController {
+            rows: self.rows.clone(),
+            row_height: self.row_height.clone(),
+            selected: self.selected.clone(),
+            requested: self.requested.clone(),
+            state: self.state.clone(),
+        }
+    }
     pub fn height(mut self, height: f32) -> Self {
         self.height = height;
         self
@@ -292,32 +331,42 @@ impl VirtualList {
         self
     }
 
-    pub fn selected(mut self, index: usize) -> Self {
-        self.selected = Some(index);
+    pub(crate) fn on_visible_range(
+        mut self,
+        handler: impl Fn(usize, u32) -> bool + 'static,
+    ) -> Self {
+        self.on_visible = Some(Rc::new(handler));
+        self
+    }
+
+    pub fn selected(self, index: usize) -> Self {
+        self.selected.set(Some(index));
         self
     }
 }
 
 impl View for VirtualList {
     fn mount(&self, cx: &mut MountCx) -> NodeId {
-        let state = Rc::new(ScrollState::new());
-        state.set_content(self.rows as f32 * self.row_height);
+        self.state
+            .set_content(self.rows.get() as f32 * self.row_height.get());
         let node = cx.add_node(Style {
             clip: true,
             width: self.width,
             height: Some(self.height),
             ..Style::default()
         });
-        cx.tree.set_scroll(node, state.clone());
+        cx.tree.set_scroll(node, self.state.clone());
         cx.set_widget(
             node,
             VirtualListWidget {
-                rows: self.rows,
-                row_height: self.row_height,
+                rows: self.rows.clone(),
+                row_height: self.row_height.clone(),
                 label: self.label.clone(),
                 on_select: self.on_select.clone(),
-                selected: self.selected,
-                state,
+                on_visible: self.on_visible.clone(),
+                requested: self.requested.clone(),
+                selected: self.selected.clone(),
+                state: self.state.clone(),
                 cache: HashMap::new(),
                 cache_width: 0.0,
                 dragging: false,
@@ -328,38 +377,50 @@ impl View for VirtualList {
 }
 
 struct VirtualListWidget {
-    rows: usize,
-    row_height: f32,
+    rows: Rc<Cell<usize>>,
+    row_height: Rc<Cell<f32>>,
     label: LabelFn,
     on_select: Option<SelectFn>,
-    selected: Option<usize>,
+    on_visible: Option<VisibleFn>,
+    requested: Rc<std::cell::Cell<Option<(usize, usize)>>>,
+    selected: Rc<Cell<Option<usize>>>,
     state: Rc<ScrollState>,
-    cache: HashMap<usize, Arc<Layout<Color>>>,
+    cache: HashMap<usize, (String, Arc<Layout<Color>>)>,
     cache_width: f32,
     dragging: bool,
 }
 
 impl VirtualListWidget {
+    fn rows(&self) -> usize {
+        self.rows.get()
+    }
+    fn row_height(&self) -> f32 {
+        self.row_height.get()
+    }
+
     fn content_width(&self, rect: Rect) -> f32 {
         (rect.width - SCROLLBAR_GUTTER - 16.0).max(1.0)
     }
 
     fn visible_range(&self, viewport: f32) -> (usize, usize) {
-        if self.rows == 0 {
+        let rows = self.rows();
+        let row_height = self.row_height();
+        if rows == 0 {
             return (0, 0);
         }
-        let first = (self.state.offset() / self.row_height).floor() as usize;
-        let visible = (viewport / self.row_height).ceil() as usize + 1;
-        (first.min(self.rows - 1), (first + visible).min(self.rows))
+        let first = (self.state.offset() / row_height).floor() as usize;
+        let visible = (viewport / row_height).ceil() as usize + 1;
+        (first.min(rows - 1), (first + visible).min(rows))
     }
 
     fn select(&mut self, index: usize, cx: &mut EventCx) {
-        if self.rows == 0 {
+        let rows = self.rows();
+        if rows == 0 {
             return;
         }
-        let index = index.min(self.rows - 1);
-        if self.selected != Some(index) {
-            self.selected = Some(index);
+        let index = index.min(rows - 1);
+        if self.selected.get() != Some(index) {
+            self.selected.set(Some(index));
             if let Some(handler) = &self.on_select {
                 handler(index);
             }
@@ -368,8 +429,9 @@ impl VirtualListWidget {
     }
 
     fn scroll_to(&mut self, index: usize, viewport: f32, cx: &mut EventCx) {
-        let top = index as f32 * self.row_height;
-        let bottom = top + self.row_height;
+        let row_height = self.row_height();
+        let top = index as f32 * row_height;
+        let bottom = top + row_height;
         let offset = self.state.offset();
         if top < offset {
             self.state.set_offset(top);
@@ -381,11 +443,12 @@ impl VirtualListWidget {
     }
 
     fn row_at(&self, rect: Rect, pos: Point) -> Option<usize> {
-        if self.rows == 0 || pos.y < rect.y || pos.y >= rect.bottom() {
+        let rows = self.rows();
+        if rows == 0 || pos.y < rect.y || pos.y >= rect.bottom() {
             return None;
         }
-        let row = ((pos.y - rect.y + self.state.offset()) / self.row_height).floor() as usize;
-        (row < self.rows).then_some(row)
+        let row = ((pos.y - rect.y + self.state.offset()) / self.row_height()).floor() as usize;
+        (row < rows).then_some(row)
     }
 }
 
@@ -406,7 +469,15 @@ impl Widget for VirtualListWidget {
             .map(|clip| clip.intersect(content))
             .unwrap_or(content);
         let (first, end) = self.visible_range(rect.height);
+        if let Some(on_visible) = &self.on_visible
+            && self.requested.get() != Some((first, end))
+            && on_visible(first, (end - first) as u32)
+        {
+            self.requested.set(Some((first, end)));
+        }
         let row_width = content.width;
+        let row_height = self.row_height();
+        let selected = self.selected.get();
         let width = self.content_width(rect);
         if (width - self.cache_width).abs() > 0.5 {
             self.cache.clear();
@@ -417,9 +488,9 @@ impl Widget for VirtualListWidget {
         }
 
         for index in first..end {
-            let y = rect.y + index as f32 * self.row_height - self.state.offset();
-            let row = Rect::new(content.x, y, row_width, self.row_height);
-            let background = if Some(index) == self.selected {
+            let y = rect.y + index as f32 * row_height - self.state.offset();
+            let row = Rect::new(content.x, y, row_width, row_height);
+            let background = if Some(index) == selected {
                 cx.theme.accent.with_alpha(48)
             } else if index % 2 == 0 {
                 cx.theme.surface
@@ -429,13 +500,20 @@ impl Widget for VirtualListWidget {
             cx.display.push_rect(row, background, 0.0, Some(clip));
 
             let label = (self.label)(index);
-            let layout = self.cache.entry(index).or_insert_with(|| {
-                cx.text
-                    .shape(&label, cx.theme.body_size, cx.theme.foreground, Some(width))
-            });
+            if self
+                .cache
+                .get(&index)
+                .is_none_or(|(cached, _)| cached != &label)
+            {
+                let layout =
+                    cx.text
+                        .shape(&label, cx.theme.body_size, cx.theme.foreground, Some(width));
+                self.cache.insert(index, (label, layout));
+            }
+            let layout = &self.cache[&index].1;
             let origin = Point::new(
                 row.x + 8.0,
-                row.y + (self.row_height - layout.height()).max(0.0) * 0.5,
+                row.y + (row_height - layout.height()).max(0.0) * 0.5,
             );
             cx.display.push_layout(layout, origin, Some(clip));
         }
@@ -481,29 +559,30 @@ impl Widget for VirtualListWidget {
                 EventStatus::Handled
             }
             UiEvent::KeyDown { key, .. } if cx.state.focused => {
-                let visible = (cx.rect.height / self.row_height).floor().max(1.0) as usize;
+                let row_height = self.row_height();
+                let rows = self.rows();
+                let selected = self.selected.get();
+                let visible = (cx.rect.height / row_height).floor().max(1.0) as usize;
                 match key {
                     Key::Up => {
-                        let next = self.selected.map(|i| i.saturating_sub(1)).unwrap_or(0);
+                        let next = selected.map(|i| i.saturating_sub(1)).unwrap_or(0);
                         self.select(next, cx);
                         self.scroll_to(next, cx.rect.height, cx);
                     }
                     Key::Down => {
-                        let next = self
-                            .selected
-                            .map(|i| (i + 1).min(self.rows.saturating_sub(1)))
+                        let next = selected
+                            .map(|i| (i + 1).min(rows.saturating_sub(1)))
                             .unwrap_or(0);
                         self.select(next, cx);
                         self.scroll_to(next, cx.rect.height, cx);
                     }
                     Key::PageUp => {
-                        let next = self.selected.unwrap_or(0).saturating_sub(visible);
+                        let next = selected.unwrap_or(0).saturating_sub(visible);
                         self.select(next, cx);
                         self.scroll_to(next, cx.rect.height, cx);
                     }
                     Key::PageDown => {
-                        let next =
-                            (self.selected.unwrap_or(0) + visible).min(self.rows.saturating_sub(1));
+                        let next = (selected.unwrap_or(0) + visible).min(rows.saturating_sub(1));
                         self.select(next, cx);
                         self.scroll_to(next, cx.rect.height, cx);
                     }
@@ -513,7 +592,7 @@ impl Widget for VirtualListWidget {
                         cx.request_paint();
                     }
                     Key::End => {
-                        let last = self.rows.saturating_sub(1);
+                        let last = rows.saturating_sub(1);
                         self.select(last, cx);
                         self.state.set_offset(self.state.max_offset());
                         cx.request_paint();
@@ -523,7 +602,7 @@ impl Widget for VirtualListWidget {
                 EventStatus::Handled
             }
             UiEvent::AccessibilityClick => {
-                if let Some(selected) = self.selected {
+                if let Some(selected) = self.selected.get() {
                     self.select(selected, cx);
                 }
                 EventStatus::Handled
@@ -542,8 +621,8 @@ impl Widget for VirtualListWidget {
 
     fn accessibility(&mut self, node: &mut accesskit::Node) {
         node.set_role(accesskit::Role::List);
-        node.set_label(format!("Daftar {} item", self.rows));
-        if let Some(selected) = self.selected {
+        node.set_label(format!("Daftar {} item", self.rows()));
+        if let Some(selected) = self.selected.get() {
             node.set_description(format!("Item {} terpilih", selected + 1));
         }
         node.add_action(accesskit::Action::Focus);

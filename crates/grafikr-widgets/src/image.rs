@@ -1,26 +1,28 @@
 //! Raw RGBA image view. Stretches to its node rect.
 
+use std::rc::Rc;
 use std::sync::Arc;
 
 use grafikr_core::{
-    ImageData, MeasureCx, MountCx, NodeId, PaintCx, Rect, Size, Style, View, Widget,
+    DirtyFlags, ImageData, MeasureCx, MountCx, NodeId, PaintCx, Rect, Signal, Size, Style, View,
+    Widget, observe,
 };
 
 use crate::into_views;
 
 pub struct Image {
-    data: Arc<ImageData>,
+    data: Signal<Arc<ImageData>>,
     width: Option<f32>,
     height: Option<f32>,
-    label: String,
+    label: Signal<String>,
 }
 
 pub fn image(data: Arc<ImageData>) -> Image {
     Image {
-        data,
+        data: Signal::new(data),
         width: None,
         height: None,
-        label: "Image".to_owned(),
+        label: Signal::new("Image".to_owned()),
     }
 }
 
@@ -35,24 +37,59 @@ impl Image {
         self
     }
 
-    pub fn label(mut self, label: impl Into<String>) -> Self {
-        self.label = label.into();
+    pub fn label(self, label: impl Into<String>) -> Self {
+        self.label.set(label.into());
         self
+    }
+    pub(crate) fn controller(&self) -> ImageController {
+        ImageController {
+            data: self.data.clone(),
+            label: self.label.clone(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct ImageController {
+    data: Signal<Arc<ImageData>>,
+    label: Signal<String>,
+}
+impl ImageController {
+    pub(crate) fn set_data(&self, value: Arc<ImageData>) {
+        self.data.set(value)
+    }
+    pub(crate) fn set_label(&self, value: String) {
+        self.label.set(value)
     }
 }
 
 impl View for Image {
     fn mount(&self, cx: &mut MountCx) -> NodeId {
+        let data = self.data.get();
         let id = cx.add_node(Style {
-            width: Some(self.width.unwrap_or(self.data.width as f32)),
-            height: Some(self.height.unwrap_or(self.data.height as f32)),
+            width: Some(self.width.unwrap_or(data.width as f32)),
+            height: Some(self.height.unwrap_or(data.height as f32)),
             ..Style::default()
+        });
+        let runtime = cx.runtime.clone();
+        let data = self.data.clone();
+        let label = self.label.clone();
+        let subscriber: Rc<dyn Fn()> = Rc::new(move || {
+            runtime.invalidate(
+                id,
+                DirtyFlags::LAYOUT | DirtyFlags::PAINT | DirtyFlags::ACCESSIBILITY,
+            )
+        });
+        observe(&subscriber, || {
+            data.get();
+            label.get();
         });
         cx.set_widget(
             id,
             ImageWidget {
                 data: self.data.clone(),
                 label: self.label.clone(),
+                _subscriber: subscriber,
             },
         );
         id
@@ -60,22 +97,24 @@ impl View for Image {
 }
 
 struct ImageWidget {
-    data: Arc<ImageData>,
-    label: String,
+    data: Signal<Arc<ImageData>>,
+    label: Signal<String>,
+    _subscriber: Rc<dyn Fn()>,
 }
 
 impl Widget for ImageWidget {
     fn measure(&mut self, _cx: &mut MeasureCx, _available: Size) -> Size {
-        Size::new(self.data.width as f32, self.data.height as f32)
+        let data = self.data.get();
+        Size::new(data.width as f32, data.height as f32)
     }
 
     fn paint(&mut self, cx: &mut PaintCx, rect: Rect) {
-        cx.display.push_image(self.data.clone(), rect, cx.clip);
+        cx.display.push_image(self.data.get(), rect, cx.clip);
     }
 
     fn accessibility(&mut self, node: &mut accesskit::Node) {
         node.set_role(accesskit::Role::Image);
-        node.set_label(self.label.clone());
+        node.set_label(self.label.get());
     }
 }
 

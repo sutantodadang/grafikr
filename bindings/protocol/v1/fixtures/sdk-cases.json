@@ -1,0 +1,293 @@
+{
+  "protocol": {
+    "major": 1,
+    "minor": 0
+  },
+  "cases": [
+    {
+      "id": "responses.out_of_order",
+      "area": "transport",
+      "assertion": "Resolve each response using its request id when responses arrive out of order.",
+      "scenario": {
+        "action": "request_correlation",
+        "input": {
+          "requests": [
+            {
+              "id": "first",
+              "result": "alpha"
+            },
+            {
+              "id": "second",
+              "result": "beta"
+            }
+          ],
+          "response_order": [
+            "second",
+            "first"
+          ]
+        },
+        "expected": {
+          "resolved": {
+            "first": "alpha",
+            "second": "beta"
+          }
+        }
+      }
+    },
+    {
+      "id": "callbacks.nested_request",
+      "area": "callbacks",
+      "assertion": "A handler can synchronously request state.set without blocking the response reader.",
+      "scenario": {
+        "action": "dispatch_nested_request",
+        "input": {
+          "event": "click",
+          "handler_request": {
+            "op": "state.set",
+            "value": {
+              "type": "i64",
+              "value": "7"
+            }
+          }
+        },
+        "expected": {
+          "handler_completed": true,
+          "state_value": "7"
+        }
+      }
+    },
+    {
+      "id": "callbacks.exception_hook",
+      "area": "callbacks",
+      "assertion": "A handler exception reaches the configured error hook and does not kill the reader.",
+      "scenario": {
+        "action": "throw_from_event_handler",
+        "input": {
+          "event": "click",
+          "message": "fixture exception"
+        },
+        "expected": {
+          "error_hook_calls": 1,
+          "subsequent_request": "resolved"
+        }
+      },
+      "exclude_sdks": [
+        "c"
+      ],
+      "exclusion_reason": "The C callback API has no language exception mechanism; the C++ wrapper tests its exception hook."
+    },
+    {
+      "id": "transport.eof_pending_256",
+      "area": "lifecycle",
+      "assertion": "EOF rejects 256 pending requests exactly once.",
+      "scenario": {
+        "action": "close_transport_with_pending",
+        "input": {
+          "pending_requests": 256
+        },
+        "expected": {
+          "rejected_requests": 256,
+          "rejection_count_per_id": 1
+        }
+      }
+    },
+    {
+      "id": "transport.queue_limits",
+      "area": "limits",
+      "assertion": "The 1,025th queued message and a 16 MiB plus one queue fail at the declared bound.",
+      "scenario": {
+        "action": "fill_command_queue",
+        "input": {
+          "message_limit": 1024,
+          "attempt_count": 1025,
+          "byte_limit": 16777216,
+          "overflow_bytes": 1
+        },
+        "expected": {
+          "count_overflow_code": "queue_full",
+          "byte_overflow_code": "queue_full",
+          "memory_bounded": true
+        }
+      }
+    },
+    {
+      "id": "transport.utf8_newline_100k",
+      "area": "framing",
+      "assertion": "Escaped newlines, Unicode split across reads, and a valid 100 KiB frame survive.",
+      "scenario": {
+        "action": "split_json_frame",
+        "input": {
+          "text": "line one\\nline two 雪 😀",
+          "split_inside_utf8_codepoint": true,
+          "frame_payload_bytes": 102400
+        },
+        "expected": {
+          "decoded_text": "line one\\nline two 雪 😀",
+          "request_count": 1
+        }
+      }
+    },
+    {
+      "id": "values.i64_boundaries",
+      "area": "values",
+      "assertion": "The minimum and maximum signed 64-bit values round-trip exactly.",
+      "scenario": {
+        "action": "round_trip_i64",
+        "input": {
+          "values": [
+            "-9223372036854775808",
+            "9223372036854775807"
+          ]
+        },
+        "expected": {
+          "values": [
+            "-9223372036854775808",
+            "9223372036854775807"
+          ]
+        }
+      }
+    },
+    {
+      "id": "values.non_finite_rejected",
+      "area": "values",
+      "assertion": "Reject NaN and infinities before creating pending requests or writing protocol frames.",
+      "scenario": {
+        "action": "serialize_non_finite_value",
+        "input": {
+          "values": [
+            "NaN",
+            "Infinity",
+            "-Infinity"
+          ]
+        },
+        "expected": {
+          "error": "invalid_value",
+          "pending_requests": 0,
+          "frames_written": 0
+        }
+      }
+    },
+    {
+      "id": "events.unsubscribe_stale",
+      "area": "events",
+      "assertion": "Unsubscribe suppresses a callback that was queued before unsubscribe completed.",
+      "scenario": {
+        "action": "unsubscribe_while_event_queued",
+        "input": {
+          "subscription": "sub-1",
+          "queued_event": "event-1"
+        },
+        "expected": {
+          "callback_count": 0
+        }
+      }
+    },
+    {
+      "id": "events.subscribe_early_delivery",
+      "area": "events",
+      "assertion": "Register a handler before sending event.subscribe so events arriving before its response are delivered.",
+      "scenario": {
+        "action": "deliver_event_before_subscribe_response",
+        "input": {
+          "node": "7",
+          "event": "click"
+        },
+        "expected": {
+          "callback_count": 1
+        }
+      }
+    },
+    {
+      "id": "lifecycle.close_timeout_sentinel",
+      "area": "lifecycle",
+      "assertion": "Child close finishes within five seconds and leaves an unrelated sentinel process alive.",
+      "scenario": {
+        "action": "close_child_process",
+        "input": {
+          "timeout_seconds": 5,
+          "sentinel_process": "unrelated"
+        },
+        "expected": {
+          "child_exited": true,
+          "sentinel_alive": true
+        }
+      },
+      "exclude_sdks": [
+        "c",
+        "cpp"
+      ],
+      "exclusion_reason": "The native C and C++ SDKs do not own a host child process."
+    },
+    {
+      "id": "callbacks.blocked_handler_bound",
+      "area": "backpressure",
+      "assertion": "The reader handles a blocked callback only up to the configured quota, then fails terminally instead of growing without bound.",
+      "scenario": {
+        "action": "block_event_handler",
+        "input": {
+          "blocked_handler": true,
+          "callback_queue_limit": 1024
+        },
+        "expected": {
+          "terminal_after_quota": true,
+          "unbounded_growth": false
+        }
+      }
+    },
+    {
+      "id": "installed.counter_form",
+      "area": "installed",
+      "assertion": "A clean installed consumer clicks a counter, enters Unicode text, observes bound state, and closes/disposes.",
+      "scenario": {
+        "action": "run_installed_example",
+        "input": {
+          "example": "counter_form",
+          "mouse_clicks": 1,
+          "text": "Grafikr 雪"
+        },
+        "expected": {
+          "counter": 1,
+          "text": "Grafikr 雪",
+          "closed": true
+        }
+      }
+    },
+    {
+      "id": "installed.dashboard",
+      "area": "installed",
+      "assertion": "A clean installed consumer scrolls 50,000 rows, selects, updates canvas/image, and disposes resources.",
+      "scenario": {
+        "action": "run_installed_example",
+        "input": {
+          "example": "dashboard",
+          "row_count": 50000,
+          "select_row": 49999,
+          "update_canvas": true,
+          "upload_image": true
+        },
+        "expected": {
+          "selected_row": 49999,
+          "resource_cleanup": true
+        }
+      }
+    },
+    {
+      "id": "installed.multi_window",
+      "area": "installed",
+      "assertion": "A clean installed consumer exercises modal keyboard focus, closes one of two windows, then shuts down the last.",
+      "scenario": {
+        "action": "run_installed_example",
+        "input": {
+          "example": "multi_window",
+          "windows": 2,
+          "open_modal": true,
+          "close_first_window": true
+        },
+        "expected": {
+          "second_window_responsive": true,
+          "process_exited_after_last_close": true
+        }
+      }
+    }
+  ]
+}
