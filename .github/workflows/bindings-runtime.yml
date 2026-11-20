@@ -126,11 +126,11 @@ jobs:
               os.environ["VSCMD_ARG_TGT_ARCH"],
           )
           with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as path:
-              path.write(link_dir + os.linesep)
+              path.write(link_dir + "\n")
           target = os.environ["GRAFIKR_TARGET"].upper().replace("-", "_")
           linker = os.path.join(link_dir, "link.exe")
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
-              env.write(f"CARGO_TARGET_{target}_LINKER={linker}{os.linesep}")
+              env.write(f"CARGO_TARGET_{target}_LINKER={linker}\n")
           PY
       - name: Install Lua SDK modules
         shell: bash
