@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <threads.h>
+#include "thread_compat.h"
 
 typedef struct scenario {
     gf_client *client;

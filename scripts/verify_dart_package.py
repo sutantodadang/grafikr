@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import sys
+import shutil
 import tarfile
 import tempfile
 from pathlib import Path, PurePosixPath
@@ -145,7 +146,9 @@ def verify(bundle: Path, fixture_scenarios: bool = False, package_root: Path | N
         os.environ["GRAFIKR_BUNDLE"] = str(bundle.resolve())
         os.environ["GRAFIKR_CACHE"] = str(work / "runtime-cache")
         try:
-            _tool("dart", "run", str((package / "example/state_smoke.dart").resolve()), cwd=consumer)
+            example = consumer / "state_smoke.dart"
+            shutil.copyfile(package / "example/state_smoke.dart", example)
+            _tool("dart", "run", example.name, cwd=consumer)
             if fixture_scenarios:
                 fixture = os.environ.get("GRAFIKR_FIXTURE_HOST")
                 if not fixture or not Path(fixture).is_absolute() or not Path(fixture).is_file():

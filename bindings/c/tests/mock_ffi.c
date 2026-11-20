@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <threads.h>
+#include "thread_compat.h"
 #include <time.h>
 
 typedef struct frame {

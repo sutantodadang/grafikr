@@ -21,7 +21,7 @@ typedef atomic_int gf_atomic_int;
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <threads.h>
+#include "thread_compat.h"
 #include <time.h>
 
 #define GF_MAX_FRAME_BYTES (8u * 1024u * 1024u)

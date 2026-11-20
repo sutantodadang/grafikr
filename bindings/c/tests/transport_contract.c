@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <threads.h>
+#include "thread_compat.h"
 
 typedef struct request_call {
     gf_client *client;

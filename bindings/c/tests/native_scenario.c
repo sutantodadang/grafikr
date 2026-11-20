@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <threads.h>
+#include "thread_compat.h"
 
 #define MAX_FRAME_BYTES (8u * 1024u * 1024u)
 
