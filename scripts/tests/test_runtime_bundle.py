@@ -187,7 +187,7 @@ libmissing.so.1 => not found
             type(bundle),
             "is_junction",
             autospec=True,
-            side_effect=lambda path: path == bundle / "bin",
+            side_effect=lambda path: path == bundle.resolve() / "bin",
             create=True,
         ):
             with self.assertRaisesRegex(ValueError, "link or junction"):
@@ -256,7 +256,7 @@ libmissing.so.1 => not found
             type(destination),
             "is_junction",
             autospec=True,
-            side_effect=lambda path: path == destination,
+            side_effect=lambda path: path == destination.parent.resolve() / destination.name,
             create=True,
         ):
             with self.assertRaisesRegex(ValueError, "link or junction"):
