@@ -13,6 +13,7 @@ if(APPLE)
     "-framework Foundation"
     "-framework CoreFoundation"
     "-framework CoreGraphics"
+    "-framework CoreVideo"
     "-framework CoreText"
     "-framework Carbon"
     objc)
