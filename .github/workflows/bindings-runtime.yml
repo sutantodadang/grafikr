@@ -146,6 +146,7 @@ jobs:
             rtk proxy Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp -ac >/tmp/grafikr-xvfb.log 2>&1 &
             rtk proxy sleep 2
             export DISPLAY=:99 XDG_RUNTIME_DIR=/tmp/grafikr-runtime
+            rtk proxy python -c 'import os; open(os.environ["GITHUB_ENV"], "a", encoding="utf-8").write("DISPLAY=:99" + chr(10) + "XDG_RUNTIME_DIR=/tmp/grafikr-runtime" + chr(10) + "WGPU_BACKEND=vulkan" + chr(10) + "WINIT_UNIX_BACKEND=x11" + chr(10) + "WAYLAND_DISPLAY=" + chr(10))'
             rtk proxy openbox >/tmp/grafikr-openbox.log 2>&1 &
             rtk proxy sleep 2
             rtk proxy python scripts/build_runtime.py --target "${{ matrix.target }}" --out target/runtime/current
