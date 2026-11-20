@@ -111,6 +111,8 @@ jobs:
             libfontconfig1-dev libssl-dev xvfb xauth x11-utils openbox mesa-vulkan-drivers
       - name: Install Lua SDK modules
         shell: bash
+        env:
+          MAKE: ${{ runner.os == 'Windows' && 'nmake' || 'make' }}
         run: |
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             rtk proxy luarocks config cmake_generator "NMake Makefiles"
