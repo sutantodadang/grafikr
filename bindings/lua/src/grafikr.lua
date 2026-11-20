@@ -1,5 +1,12 @@
 local uv = require("luv")
 local json = require("dkjson")
+local sigpipe
+
+if uv.constants.SIGPIPE then
+  sigpipe = uv.new_signal()
+  sigpipe:start("sigpipe", function() end)
+  sigpipe:unref()
+end
 
 local M = { MAX_FRAME = 8 * 1024 * 1024, MAX_PENDING_BYTES = 16 * 1024 * 1024, MAX_OUTSTANDING_REQUESTS = 256 }
 local App = {}; App.__index = App

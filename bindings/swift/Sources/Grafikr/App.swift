@@ -50,6 +50,10 @@ public final class App: @unchecked Sendable {
     }
 
     public func request(_ op: String, _ args: [String: Any]) async throws -> Data {
+        let probe: [String: Any] = ["op":op,"args":args]
+        guard JSONSerialization.isValidJSONObject(probe) else {
+            throw BridgeError(code:"invalid_value",message:"Request arguments are not valid JSON")
+        }
         let id: String = try synchronized { guard !closed else { throw BridgeError(code:"connection_closed",message:"App is closed") }; nextID += 1; return String(nextID) }
         let object: [String: Any] = ["id":id,"op":op,"args":args]
         var bytes = try JSONSerialization.data(withJSONObject: object, options: [.fragmentsAllowed]); bytes.append(10)

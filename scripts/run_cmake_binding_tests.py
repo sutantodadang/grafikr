@@ -307,6 +307,7 @@ def _verify_bundle_cmake_package(runtime: Path, target: Path, project: str = "c"
             )
         cmake += (
             f'add_executable(c-installed-scenarios "{(ROOT / "bindings/c/tests/installed_scenarios.c").as_posix()}")\n'
+            f'target_include_directories(c-installed-scenarios PRIVATE "{(ROOT / "bindings/c/include").as_posix()}")\n'
             "target_link_libraries(c-installed-scenarios PRIVATE Grafikr::client)\n"
         )
         if not run_scenarios:
