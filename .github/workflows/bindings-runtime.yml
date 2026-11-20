@@ -69,7 +69,7 @@ jobs:
           if (-not (Test-Path -LiteralPath $vcvars)) { throw "VS 2022 vcvarsall.bat is missing: $vcvars" }
           $targetArch = if ($env:GRAFIKR_TARGET -eq "aarch64-pc-windows-msvc") { "arm64" } else { "x64" }
           $hostArch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "x64" }
-          $arch = if ($targetArch -eq $hostArch) { $targetArch } else { "$hostArch`_$targetArch" }
+          $arch = if ($targetArch -eq $hostArch) { $targetArch } else { "${hostArch}_$targetArch" }
           $batch = Join-Path $env:RUNNER_TEMP "grafikr-vcvars.cmd"
           "@echo off`r`ncall `"$vcvars`" $arch -vcvars_ver=14.44 >nul`r`nif errorlevel 1 exit /b 1`r`nset`r`n" | Set-Content -LiteralPath $batch -Encoding ascii
           $environment = & cmd.exe /d /c $batch
