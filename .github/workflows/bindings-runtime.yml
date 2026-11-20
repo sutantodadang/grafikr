@@ -121,7 +121,11 @@ jobs:
           rtk proxy python -c 'import os; prefix=open(os.path.join(os.environ["RUNNER_TEMP"], "openssl-prefix")).read().strip(); open(os.environ["GITHUB_ENV"], "a", encoding="utf-8").write("CRYPTO_DIR="+prefix+"\n")'
       - name: Install Lua SDK modules
         run: |
-          rtk proxy luarocks install luaossl
+          if [[ -n "${CRYPTO_DIR:-}" ]]; then
+            rtk proxy luarocks install luaossl "CRYPTO_DIR=$CRYPTO_DIR"
+          else
+            rtk proxy luarocks install luaossl
+          fi
           rtk proxy luarocks install dkjson 2.11-1
           rtk proxy luarocks install luv 1.53.0-1
       - name: Build and install Lua SDK rock
