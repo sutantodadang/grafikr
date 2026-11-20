@@ -175,7 +175,7 @@ libmissing.so.1 => not found
     def test_manifest_rejects_junction_bundle_root(self):
         bundle = self.root / "junction-root"
         bundle.mkdir()
-        with mock.patch.object(Path, "is_junction", autospec=True, return_value=True, create=True):
+        with mock.patch.object(type(bundle), "is_junction", autospec=True, return_value=True, create=True):
             with self.assertRaisesRegex(ValueError, "regular directory"):
                 validate_manifest(bundle)
 
@@ -184,7 +184,7 @@ libmissing.so.1 => not found
         bundle.mkdir()
         write_fixture_bundle(bundle)
         with mock.patch.object(
-            Path,
+            type(bundle),
             "is_junction",
             autospec=True,
             side_effect=lambda path: path == bundle / "bin",
@@ -253,7 +253,7 @@ libmissing.so.1 => not found
         destination = self.root / "cache" / "runtime"
         destination.parent.mkdir()
         with mock.patch.object(
-            Path,
+            type(destination),
             "is_junction",
             autospec=True,
             side_effect=lambda path: path == destination,
