@@ -15,6 +15,7 @@ if(APPLE)
     "-framework CoreGraphics"
     "-framework CoreVideo"
     "-framework CoreText"
+    "-framework Metal"
     "-framework Carbon"
     objc)
 endif()
