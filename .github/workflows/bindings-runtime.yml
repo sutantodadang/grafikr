@@ -112,17 +112,17 @@ jobs:
         run: |
           $triplet = if ($env:RUNNER_ARCH -eq "ARM64") { "arm64-windows" } else { "x64-windows" }
           rtk proxy "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install "openssl:$triplet"
-          rtk proxy python -c 'import os; root=os.path.join(os.environ["VCPKG_INSTALLATION_ROOT"],"installed",os.environ["RUNNER_ARCH"].lower()+"-windows"); open(os.environ["GITHUB_ENV"],"a",encoding="utf-8").write("CRYPTO_DIR="+root+chr(10))'
+          rtk proxy python -c 'import os; root=os.path.join(os.environ["VCPKG_INSTALLATION_ROOT"],"installed",os.environ["RUNNER_ARCH"].lower()+"-windows"); open(os.environ["GITHUB_ENV"],"a",encoding="utf-8").write("OPENSSL_DIR="+root+chr(10))'
       - name: Install Lua crypto dependency (macOS)
         if: runner.os == 'macOS'
         run: |
           rtk proxy brew install openssl@3
           rtk proxy brew --prefix openssl@3 > "$RUNNER_TEMP/openssl-prefix"
-          rtk proxy python -c 'import os; prefix=open(os.path.join(os.environ["RUNNER_TEMP"], "openssl-prefix")).read().strip(); open(os.environ["GITHUB_ENV"], "a", encoding="utf-8").write("CRYPTO_DIR="+prefix+"\n")'
+          rtk proxy python -c 'import os; prefix=open(os.path.join(os.environ["RUNNER_TEMP"], "openssl-prefix")).read().strip(); open(os.environ["GITHUB_ENV"], "a", encoding="utf-8").write("OPENSSL_DIR="+prefix+"\n")'
       - name: Install Lua SDK modules
         run: |
-          if [[ -n "${CRYPTO_DIR:-}" ]]; then
-            rtk proxy luarocks install luaossl "CRYPTO_DIR=$CRYPTO_DIR"
+          if [[ -n "${OPENSSL_DIR:-}" ]]; then
+            rtk proxy luarocks install luaossl "OPENSSL_DIR=$OPENSSL_DIR"
           else
             rtk proxy luarocks install luaossl
           fi
