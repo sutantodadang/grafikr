@@ -356,6 +356,8 @@ class PackageBindingTests(unittest.TestCase):
         self.assertIn("example/state_smoke.dart", dart_paths)
         lua_paths = {member for _, member in _source_sdk_files("lua", "1.1.0")}
         self.assertIn("src/grafikr_reader.lua", lua_paths)
+        self.assertIn("vendor/sha2/LICENSE.txt", lua_paths)
+        self.assertIn("vendor/sha2/sha2lib.c", lua_paths)
         swift_paths = {member for _, member in _source_sdk_files("swift", "1.1.0")}
         self.assertIn("LICENSE", swift_paths)
         self.assertIn("ThirdPartyNotices/swift-crypto-LICENSE.txt", swift_paths)

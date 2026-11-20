@@ -1,23 +1,6 @@
 local uv = require("luv")
 local json = require("dkjson")
-local has_openssl = pcall(require, "openssl.digest")
-if not has_openssl then
-  assert(not os.getenv("GRAFIKR_LUA_REQUIRE_OPENSSL"), "luaossl is required for this SDK suite")
-  package.preload["openssl.digest"] = function()
-    return { new=function()
-      local value = ""
-      return {
-        update=function(_, chunk) value = value .. chunk; return true end,
-        final=function()
-          local sum = 0
-          for index = 1, #value do sum = (sum + value:byte(index) * index) % 256 end
-          return string.rep(string.char(sum), 32)
-        end,
-      }
-    end }
-  end
-end
-local openssl_digest = require("openssl.digest")
+local sha2 = require("sha2")
 local grafikr = require("grafikr")
 
 local function read(path)
@@ -58,10 +41,13 @@ local function remove_tree(path)
 end
 
 local function sha256(value)
-  local digest = openssl_digest.new("sha256")
-  assert(digest:update(value))
-  return (digest:final():gsub(".", function(byte) return string.format("%02x", string.byte(byte)) end))
+  return sha2.sha256hex(value)
 end
+
+assert(sha2.sha256hex("abc") == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+local streaming = sha2.new(256)
+streaming:add("a"):add("b"):add("c")
+assert(streaming:hexdigest() == sha2.sha256hex("abc"), "streamed SHA-256 differs from one-shot digest")
 
 local function fixture(root, relative, content, digest, record_path)
   mkdir(root)

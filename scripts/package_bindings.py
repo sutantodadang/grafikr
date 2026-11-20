@@ -574,7 +574,12 @@ def _source_sdk_files(sdk: str, version: str) -> list[tuple[Path, str]]:
         ],
         "dart": [("pubspec.yaml", True), ("README.md", True), ("lib/**/*.dart", True), ("bin/**/*.dart", True), ("example/**/*.dart", True)],
         "php": [("composer.json", True), ("README.md", True), ("src/**/*.php", True), ("bin/**/*.php", True), ("examples/**/*.php", True)],
-        "lua": [(f"grafikr-{version}-1.rockspec", True), ("README.md", True), ("src/**/*.lua", True)],
+        "lua": [
+            (f"grafikr-{version}-1.rockspec", True),
+            ("README.md", True),
+            ("src/**/*.lua", True),
+            ("vendor/sha2/**/*", True),
+        ],
     }
     if sdk not in patterns:
         raise ValueError(f"source package adapter is not implemented for {sdk}")

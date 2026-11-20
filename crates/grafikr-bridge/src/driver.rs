@@ -61,61 +61,67 @@ impl AppDriver for BridgeDriver {
             cx.stop();
             return;
         }
-        let requests = match self.session.drain(64) {
-            Ok(requests) => requests,
-            Err(_) => {
-                self.control.request_stop();
-                cx.stop();
-                return;
-            }
-        };
-        let batch_full = requests.len() == 64;
-        let stop = {
-            let mut backend = ShellBackend::new(cx);
-            let now = Instant::now();
-            let dt = now.duration_since(self.last_transition_tick).as_secs_f32();
-            self.last_transition_tick = now;
-            self.dispatcher.tick_transitions(dt, &mut backend);
-            self.dispatcher.drain_intents(&mut backend);
-            let mut stop = false;
-            for request in requests {
-                if !self.handshaken && request.op != crate::protocol::Operation::Hello {
-                    let response = protocol_error(
-                        request.id,
-                        BridgeError::new("hello_required", "hello must be the first request"),
+        loop {
+            let requests = match self.session.drain(64) {
+                Ok(requests) => requests,
+                Err(_) => {
+                    self.control.request_stop();
+                    cx.stop();
+                    return;
+                }
+            };
+            let batch_full = requests.len() == 64;
+            let stop = {
+                let mut backend = ShellBackend::new(cx);
+                let now = Instant::now();
+                let dt = now.duration_since(self.last_transition_tick).as_secs_f32();
+                self.last_transition_tick = now;
+                self.dispatcher.tick_transitions(dt, &mut backend);
+                self.dispatcher.drain_intents(&mut backend);
+                let mut stop = false;
+                for request in requests {
+                    if !self.handshaken && request.op != crate::protocol::Operation::Hello {
+                        let response = protocol_error(
+                            request.id,
+                            BridgeError::new("hello_required", "hello must be the first request"),
+                        );
+                        if let Ok(frame) = encode(&response) {
+                            let _ = self.control.publish(&frame);
+                        }
+                        continue;
+                    }
+                    let hello = request.op == crate::protocol::Operation::Hello;
+                    let response = self.dispatcher.execute(request, &mut backend);
+                    let version_mismatch = matches!(
+                        &response,
+                        Outbound::Response {
+                            ok: false,
+                            error: Some(error),
+                            ..
+                        } if error.code == "version_mismatch"
                     );
+                    if hello && matches!(&response, Outbound::Response { ok: true, .. }) {
+                        self.handshaken = true;
+                    }
                     if let Ok(frame) = encode(&response) {
                         let _ = self.control.publish(&frame);
                     }
-                    continue;
+                    if self.dispatcher.is_stopped() || version_mismatch {
+                        self.control.request_stop();
+                        stop = true;
+                        break;
+                    }
                 }
-                let hello = request.op == crate::protocol::Operation::Hello;
-                let response = self.dispatcher.execute(request, &mut backend);
-                let version_mismatch = matches!(
-                    &response,
-                    Outbound::Response {
-                        ok: false,
-                        error: Some(error),
-                        ..
-                    } if error.code == "version_mismatch"
-                );
-                if hello && matches!(&response, Outbound::Response { ok: true, .. }) {
-                    self.handshaken = true;
-                }
-                if let Ok(frame) = encode(&response) {
-                    let _ = self.control.publish(&frame);
-                }
-                if self.dispatcher.is_stopped() || version_mismatch {
-                    self.control.request_stop();
-                    stop = true;
-                    break;
-                }
+                stop
+            };
+            let stopping = self.control.lifecycle() == Lifecycle::Stopping;
+            if stop || (stopping && !batch_full) {
+                cx.stop();
+                return;
             }
-            stop
-        };
-        let eof_drained = self.control.lifecycle() == Lifecycle::Stopping && !batch_full;
-        if stop || eof_drained {
-            cx.stop();
+            if !stopping || !batch_full {
+                break;
+            }
         }
     }
 

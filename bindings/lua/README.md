@@ -1,8 +1,9 @@
 # Grafikr Lua SDK
 
 Lua 5.4 module uses luv for bidirectional pipes and child lifecycle, dkjson for
-protocol JSON, and luaossl is reserved for explicit runtime-bundle checksum
-verification. It does not use `io.popen` or a shell. API operations are
+protocol JSON, and a vendored streaming SHA-256 module for explicit
+runtime-bundle checksum verification. Its source and license are included in
+the rock. It does not use `io.popen` or a shell. API operations are
 callback-based, and callbacks can submit more requests asynchronously. A
 bundled Lua reader process continues reading host frames while an application
 callback runs; its unacknowledged queue is limited to 1,024 messages and 16 MiB,

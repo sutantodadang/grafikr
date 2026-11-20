@@ -104,12 +104,8 @@ local function safe_relative(value)
   return value:gsub("/", SEPARATOR)
 end
 
-local function hex(raw)
-  return (raw:gsub(".", function(byte) return string.format("%02x", string.byte(byte)) end))
-end
-
 local function hash_file(path, expected_size, code)
-  local digest = require("openssl.digest")
+  local sha2 = require("sha2")
   local fd, err = uv.fs_open(path, "r", 0)
   if not fd then abort(code, err or ("could not open runtime file: " .. path)) end
   local ok, result, opened = pcall(function()
@@ -121,15 +117,15 @@ local function hash_file(path, expected_size, code)
     if expected_size ~= nil and info.size ~= expected_size then
       abort(code, "runtime file size does not match manifest: " .. path)
     end
-    local hasher = digest.new("sha256")
+    local hasher = sha2.new(256)
     local offset = 0
     while offset < info.size do
       local chunk, read_error = uv.fs_read(fd, math.min(READ_CHUNK_BYTES, info.size - offset), offset)
       if not chunk or #chunk == 0 then abort(code, read_error or "runtime file ended before its declared size") end
-      assert(hasher:update(chunk))
+      hasher:add(chunk)
       offset = offset + #chunk
     end
-    return hex(hasher:final()), info
+    return hasher:hexdigest(), info
   end)
   uv.fs_close(fd)
   if not ok then error(result, 0) end

@@ -191,12 +191,24 @@ fn eof_drains_every_accepted_request_across_driver_batches() {
     }
     drop(input);
     let output = child.wait_with_output().unwrap();
-    assert!(output.status.success());
+    assert!(
+        output.status.success(),
+        "host failed while draining EOF: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let lines: Vec<_> = String::from_utf8(output.stdout)
         .unwrap()
         .lines()
         .map(|line| serde_json::from_str::<serde_json::Value>(line).unwrap())
         .collect();
-    assert_eq!(lines.len(), 71);
+    let received: std::collections::HashSet<_> = lines
+        .iter()
+        .filter_map(|response| response["id"].as_str())
+        .collect();
+    let missing: Vec<_> = std::iter::once("hello".to_owned())
+        .chain((0..70).map(|index| format!("state-{index}")))
+        .filter(|id| !received.contains(id.as_str()))
+        .collect();
+    assert_eq!(lines.len(), 71, "missing responses: {missing:?}");
     assert!(lines.iter().all(|response| response["ok"] == true));
 }
