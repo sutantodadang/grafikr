@@ -1148,7 +1148,6 @@ dependencies = [
  "arboard",
  "grafikr-core",
  "grafikr-render",
- "grafikr-widgets",
  "log",
  "pollster",
  "wgpu",
