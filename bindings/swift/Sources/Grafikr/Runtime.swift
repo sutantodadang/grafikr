@@ -40,7 +40,7 @@ public enum Runtime {
         guard bundle.isFileURL, cache.isFileURL else { throw failure("runtime_path", "Bundle and cache must be file URLs") }
         let target = try currentTarget()
         let source = try validate(bundle.standardizedFileURL, target: target)
-        let cacheRoot = try createDirectoryChain(cache.standardizedFileURL)
+        let cacheRoot = try createDirectoryChain(cache.standardizedFileURL.resolvingSymlinksInPath())
         let versionRoot = cacheRoot.appendingPathComponent(target, isDirectory: true)
             .appendingPathComponent(source.manifest.engine_version, isDirectory: true)
         _ = try createDirectoryChain(versionRoot)
