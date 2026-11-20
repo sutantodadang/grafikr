@@ -57,6 +57,8 @@ impl Registry {
                 "object kind handle quota exceeded",
             ));
         }
+        // Keep Rust 1.88 support; newer toolchains rename this API to `try_update`.
+        #[allow(deprecated)]
         let raw = NEXT_TOKEN
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
             .map_err(|_| BridgeError::new("quota_exceeded", "global handle space is exhausted"))?;

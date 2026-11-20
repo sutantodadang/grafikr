@@ -40,8 +40,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev \
             libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev \
-            libfontconfig1-dev
-      - name: Test
+            libfontconfig1-dev libvulkan1 mesa-vulkan-drivers xvfb xauth
+      - name: Test (Linux Xvfb)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a env WGPU_BACKEND=vulkan cargo test --workspace
+        env:
+          # Golden pixels are generated on Windows/D3D12; other vendors use
+          # different rounding in the SDF shader.
+          GRAFIKR_SKIP_GOLDEN: 1
+      - name: Test (non-Linux)
+        if: runner.os != 'Linux'
         run: cargo test --workspace
         env:
           # Golden pixels are generated on Windows/D3D12; other vendors use
