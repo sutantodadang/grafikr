@@ -158,6 +158,8 @@ jobs:
         run: rtk proxy python -m unittest scripts.tests.test_sdk_coverage -v
       - name: Build native bundle and C/C++ harnesses
         shell: bash
+        env:
+          MAKE: ${{ runner.os == 'Windows' && 'nmake' || 'make' }}
         run: |
           if [[ "${{ runner.os }}" == "Linux" ]]; then
             rtk proxy mkdir -p /tmp/grafikr-runtime
