@@ -127,7 +127,7 @@ jobs:
           if ($IsWindows) {
             $linkDir = Join-Path $env:VCToolsInstallDir "bin\Host$($env:VSCMD_ARG_HOST_ARCH)\$($env:VSCMD_ARG_TGT_ARCH)"
             $env:Path = "$linkDir;$env:Path"
-            $env:LINK = "link.exe"
+            rtk proxy luarocks config variables.LD link
           }
           rtk proxy luarocks make grafikr-1.1.0-1.rockspec
       - name: Test bundle validation
