@@ -110,6 +110,22 @@ jobs:
           rtk proxy sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev \
             libxkbcommon-x11-dev libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev \
             libfontconfig1-dev libssl-dev xvfb xauth x11-utils openbox mesa-vulkan-drivers
+      - name: Prefer MSVC linker on Windows
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          rtk proxy python - <<'PY'
+          import os
+
+          link_dir = os.path.join(
+              os.environ["VCToolsInstallDir"],
+              "bin",
+              "Host" + os.environ["VSCMD_ARG_HOST_ARCH"],
+              os.environ["VSCMD_ARG_TGT_ARCH"],
+          )
+          with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as path:
+              path.write(link_dir + os.linesep)
+          PY
       - name: Install Lua SDK modules
         shell: bash
         env:
