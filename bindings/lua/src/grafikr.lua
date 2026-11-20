@@ -2,7 +2,7 @@ local uv = require("luv")
 local json = require("dkjson")
 local sigpipe
 
-if uv.constants.SIGPIPE then
+if uv.constants and uv.constants.SIGPIPE then
   sigpipe = uv.new_signal()
   sigpipe:start("sigpipe", function() end)
   sigpipe:unref()
