@@ -113,6 +113,8 @@ jobs:
       - name: Prefer MSVC linker on Windows
         if: runner.os == 'Windows'
         shell: bash
+        env:
+          GRAFIKR_TARGET: ${{ matrix.target }}
         run: |
           rtk proxy python - <<'PY'
           import os
@@ -125,6 +127,10 @@ jobs:
           )
           with open(os.environ["GITHUB_PATH"], "a", encoding="utf-8") as path:
               path.write(link_dir + os.linesep)
+          target = os.environ["GRAFIKR_TARGET"].upper().replace("-", "_")
+          linker = os.path.join(link_dir, "link.exe")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env:
+              env.write(f"CARGO_TARGET_{target}_LINKER={linker}{os.linesep}")
           PY
       - name: Install Lua SDK modules
         shell: bash
