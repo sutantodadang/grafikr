@@ -114,7 +114,7 @@ public final class App: @unchecked Sendable {
     public func close() async {
         _ = try? await request("shutdown", [:]); synchronized { failLocked(BridgeError(code:"connection_closed",message:"App is closed")) }
         try? input.fileHandleForWriting.close(); if process.isRunning { process.terminate() }
-        if process.isRunning { try? await Task.sleep(for:.seconds(5)); if process.isRunning { process.interrupt() } }
+        if process.isRunning { try? await Task.sleep(nanoseconds: 5_000_000_000); if process.isRunning { process.interrupt() } }
     }
 
     private func consume(_ data: Data) {

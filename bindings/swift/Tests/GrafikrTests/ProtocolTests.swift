@@ -357,7 +357,7 @@ final class ProtocolTests: XCTestCase {
             _ = releaseHandler.wait(timeout: .now() + 15)
         }
         await fulfillment(of: [handlerStarted], timeout: 10)
-        try await Task.sleep(for: .seconds(1))
+        try await Task.sleep(nanoseconds: 1_000_000_000)
         do {
             _ = try await app.request("state.get", ["state":"0"])
             XCTFail("event queue overflow left the session open")
