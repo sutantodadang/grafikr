@@ -2,7 +2,7 @@ import Foundation
 import Grafikr
 
 guard CommandLine.arguments.count == 3 else {
-    fputs("usage: grafikr-runtime <unpacked-bundle-dir> <absolute-cache-dir>\n", stderr)
+    FileHandle.standardError.write(Data("usage: grafikr-runtime <unpacked-bundle-dir> <absolute-cache-dir>\n".utf8))
     exit(EXIT_FAILURE)
 }
 
@@ -13,6 +13,6 @@ do {
     )
     print(host.path)
 } catch {
-    fputs("grafikr-runtime: \(error)\n", stderr)
+    FileHandle.standardError.write(Data("grafikr-runtime: \(error)\n".utf8))
     exit(EXIT_FAILURE)
 }
