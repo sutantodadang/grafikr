@@ -10,23 +10,29 @@ fn split_utf8_request_gets_protocol_response_and_eof_stops_host() {
         .spawn()
         .expect("host executable starts");
     let mut input = child.stdin.take().unwrap();
-    let mut output = BufReader::new(child.stdout.take().unwrap());
     let request = "{\"id\":\"hello-1\",\"op\":\"hello\",\"args\":{\"protocol_major\":1,\"protocol_minor\":0,\"sdk_version\":\"π\"}}\n";
     let split = request.find('π').unwrap() + 1;
     input.write_all(&request.as_bytes()[..split]).unwrap();
     input.flush().unwrap();
     input.write_all(&request.as_bytes()[split..]).unwrap();
     input.flush().unwrap();
-
-    let mut line = String::new();
-    output.read_line(&mut line).unwrap();
-    let response: serde_json::Value = serde_json::from_str(&line).unwrap();
+    drop(input);
+    let output = child.wait_with_output().unwrap();
+    assert!(
+        output.status.success(),
+        "host failed after EOF: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        !output.stdout.is_empty(),
+        "host emitted no response after EOF: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let response: serde_json::Value =
+        serde_json::from_slice(output.stdout.split(|byte| *byte == b'\n').next().unwrap()).unwrap();
     assert_eq!(response["kind"], "response");
     assert_eq!(response["id"], "hello-1");
     assert_eq!(response["ok"], true);
-    drop(input);
-    let status = child.wait().unwrap();
-    assert!(status.success());
 }
 
 #[test]
@@ -94,7 +100,9 @@ fn oversized_frame_is_rejected_and_stops_the_host() {
         .spawn()
         .unwrap();
     let mut input = child.stdin.take().unwrap();
-    input.write_all(&vec![b' '; 8 * 1024 * 1024 + 1]).unwrap();
+    if let Err(error) = input.write_all(&vec![b' '; 8 * 1024 * 1024 + 1]) {
+        assert_eq!(error.kind(), std::io::ErrorKind::BrokenPipe);
+    }
     drop(input);
     let output = child.wait_with_output().unwrap();
     assert!(!output.status.success());
