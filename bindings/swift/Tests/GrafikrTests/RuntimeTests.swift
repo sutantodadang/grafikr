@@ -4,7 +4,7 @@ import XCTest
 
 final class RuntimeTests: XCTestCase {
     func testInstallVerifiesAndReusesBundleCache() throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent("grafikr-runtime-\(UUID().uuidString)")
+        let root = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("grafikr-runtime-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
         let bundle = root.appendingPathComponent("bundle", isDirectory: true)
         try makeBundle(bundle)
@@ -16,7 +16,7 @@ final class RuntimeTests: XCTestCase {
     }
 
     func testRejectsTraversalAndChecksumMismatchBeforeCopying() throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent("grafikr-runtime-\(UUID().uuidString)")
+        let root = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("grafikr-runtime-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
         let bundle = root.appendingPathComponent("bundle", isDirectory: true)
         try makeBundle(bundle, path: "../escape")
@@ -33,7 +33,7 @@ final class RuntimeTests: XCTestCase {
     }
 
     func testRejectsCachedManifestSubstitution() throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent("grafikr-runtime-\(UUID().uuidString)")
+        let root = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("grafikr-runtime-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
         let bundle = root.appendingPathComponent("bundle", isDirectory: true)
         try makeBundle(bundle)
@@ -49,7 +49,7 @@ final class RuntimeTests: XCTestCase {
     }
 
     func testRejectsSymbolicLinkRuntimeFile() throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent("grafikr-runtime-\(UUID().uuidString)")
+        let root = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("grafikr-runtime-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
         let bundle = root.appendingPathComponent("bundle", isDirectory: true)
         let hostPath = "bin/grafikr-host" + (RuntimeTests.isWindows ? ".exe" : "")

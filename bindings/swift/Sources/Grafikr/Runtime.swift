@@ -40,7 +40,7 @@ public enum Runtime {
         guard bundle.isFileURL, cache.isFileURL else { throw failure("runtime_path", "Bundle and cache must be file URLs") }
         let target = try currentTarget()
         let source = try validate(bundle.standardizedFileURL, target: target)
-        let cacheRoot = try createDirectoryChain(canonicalizedPath(cache.standardizedFileURL))
+        let cacheRoot = try createDirectoryChain(cache.standardizedFileURL)
         let versionRoot = cacheRoot.appendingPathComponent(target, isDirectory: true)
             .appendingPathComponent(source.manifest.engine_version, isDirectory: true)
         _ = try createDirectoryChain(versionRoot)
@@ -170,19 +170,6 @@ public enum Runtime {
             try requireType(current, .typeDirectory)
         }
         return current
-    }
-
-    private static func canonicalizedPath(_ url: URL) -> URL {
-        guard url.path.hasPrefix("/") else { return url }
-        var missing: [String] = []
-        var existing = url
-        while !FileManager.default.fileExists(atPath: existing.path) {
-            missing.insert(existing.lastPathComponent, at: 0)
-            existing.deleteLastPathComponent()
-        }
-        return missing.reduce(existing.resolvingSymlinksInPath()) {
-            $0.appendingPathComponent($1, isDirectory: true)
-        }
     }
 
     private static func sha256(_ url: URL) throws -> String {
