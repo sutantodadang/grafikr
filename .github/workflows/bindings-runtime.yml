@@ -65,6 +65,7 @@ jobs:
       - uses: leafo/gh-actions-lua@v13
         with:
           luaVersion: "5.4.9"
+          buildCache: ${{ matrix.target != 'aarch64-pc-windows-msvc' }}
       - uses: leafo/gh-actions-luarocks@v6
         if: runner.os != 'Windows'
         with:
@@ -121,6 +122,8 @@ jobs:
           rtk proxy luarocks install luv 1.53.0-1
       - name: Build and install Lua SDK rock
         working-directory: bindings/lua
+        env:
+          LINK: ${{ runner.os == 'Windows' && 'link.exe' || 'cc' }}
         run: rtk proxy luarocks make grafikr-1.1.0-1.rockspec
       - name: Test bundle validation
         run: rtk proxy python -m unittest discover -s scripts/tests -p test_runtime_bundle.py -v
