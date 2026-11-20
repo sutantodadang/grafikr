@@ -7,6 +7,16 @@ if(NOT GRAFIKR_FFI_LIBRARY)
 endif()
 option(GRAFIKR_FFI_STATIC "Link the Rust static library" OFF)
 find_package(Threads REQUIRED)
+if(APPLE)
+  set(GRAFIKR_MACOS_NATIVE_LIBS
+    "-framework AppKit"
+    "-framework Foundation"
+    "-framework CoreFoundation"
+    "-framework CoreGraphics"
+    "-framework CoreText"
+    "-framework HIToolbox"
+    objc)
+endif()
 if(GRAFIKR_FFI_STATIC)
   add_library(grafikr_ffi STATIC IMPORTED GLOBAL)
   set_target_properties(grafikr_ffi PROPERTIES IMPORTED_LOCATION "${GRAFIKR_FFI_LIBRARY}")
@@ -25,7 +35,7 @@ target_include_directories(grafikr_client PUBLIC
   PRIVATE vendor/cjson)
 target_link_libraries(grafikr_client PUBLIC grafikr_ffi PRIVATE Threads::Threads)
 if(APPLE)
-  target_link_libraries(grafikr_client PUBLIC objc)
+  target_link_libraries(grafikr_client PUBLIC ${GRAFIKR_MACOS_NATIVE_LIBS})
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   find_package(PkgConfig REQUIRED)
@@ -44,7 +54,7 @@ add_executable(grafikr_native_scenario tests/native_scenario.c)
 target_include_directories(grafikr_native_scenario PRIVATE include)
 target_link_libraries(grafikr_native_scenario PRIVATE grafikr_ffi Threads::Threads)
 if(APPLE)
-  target_link_libraries(grafikr_native_scenario PRIVATE objc)
+  target_link_libraries(grafikr_native_scenario PRIVATE ${GRAFIKR_MACOS_NATIVE_LIBS})
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   target_link_libraries(grafikr_native_scenario PRIVATE grafikr_linux_native_deps)
