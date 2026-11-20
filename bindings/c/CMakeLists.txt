@@ -14,7 +14,7 @@ if(APPLE)
     "-framework CoreFoundation"
     "-framework CoreGraphics"
     "-framework CoreText"
-    "-framework HIToolbox"
+    "-framework Carbon"
     objc)
 endif()
 if(GRAFIKR_FFI_STATIC)
