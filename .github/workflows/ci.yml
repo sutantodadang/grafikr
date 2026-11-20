@@ -40,7 +40,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev \
             libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev \
-            libfontconfig1-dev libvulkan1 mesa-vulkan-drivers xvfb xauth
+            libfontconfig1-dev libxkbcommon-x11-0 libvulkan1 mesa-vulkan-drivers xvfb xauth
       - name: Test (Linux Xvfb)
         if: runner.os == 'Linux'
         run: xvfb-run -a env WGPU_BACKEND=vulkan cargo test --workspace

@@ -10,7 +10,6 @@ description = "winit shell, wgpu surfaces, clipboard, IME, and AccessKit for Gra
 [dependencies]
 grafikr-core.workspace = true
 grafikr-render.workspace = true
-grafikr-widgets.workspace = true
 winit.workspace = true
 wgpu.workspace = true
 accesskit.workspace = true

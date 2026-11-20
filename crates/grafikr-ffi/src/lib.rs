@@ -102,6 +102,8 @@ pub unsafe extern "C" fn grafikr_session_create(session: *mut u64) -> i32 {
         if session.is_null() {
             return INVALID_ARGUMENT;
         }
+        // Rust 1.88 remains the workspace MSRV; newer compilers rename this API.
+        #[allow(deprecated)]
         let Ok(id) = NEXT_ID.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next| {
             next.checked_add(1)
         }) else {
