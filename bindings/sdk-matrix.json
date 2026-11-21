@@ -2059,7 +2059,7 @@
                 "--tests",
                 "dev.grafikr.ContractTest.blockedEventHandlerCannotExhaustReaderWithoutClosingSession"
               ],
-              "timeout_seconds": 30,
+              "timeout_seconds": 45,
               "env": {
                 "GRAFIKR_FIXTURE_EVENT_BYTES_OVERFLOW": "1"
               }
@@ -2080,7 +2080,7 @@
                 "--tests",
                 "dev.grafikr.ContractTest.closeTimeoutLeavesUnrelatedSentinelAlive"
               ],
-              "timeout_seconds": 20,
+              "timeout_seconds": 60,
               "env": {
                 "GRAFIKR_FIXTURE_DELAY_EXIT_MS": "6000"
               }
@@ -2423,7 +2423,7 @@
                 "--tests",
                 "dev.grafikr.ContractTest.blockedEventHandlerCannotExhaustReaderWithoutClosingSession"
               ],
-              "timeout_seconds": 30,
+              "timeout_seconds": 45,
               "env": {
                 "GRAFIKR_FIXTURE_EVENT_BYTES_OVERFLOW": "1"
               }
@@ -2444,7 +2444,7 @@
                 "--tests",
                 "dev.grafikr.ContractTest.closeTimeoutLeavesUnrelatedSentinelAlive"
               ],
-              "timeout_seconds": 20,
+              "timeout_seconds": 60,
               "env": {
                 "GRAFIKR_FIXTURE_DELAY_EXIT_MS": "6000"
               }

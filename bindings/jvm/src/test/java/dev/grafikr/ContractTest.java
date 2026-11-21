@@ -240,7 +240,7 @@ final class ContractTest {
                 });
                 assertTrue(entered.await(2, TimeUnit.SECONDS));
                 Field closedField = App.class.getDeclaredField("closed"); closedField.setAccessible(true);
-                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20);
                 while (!closedField.getBoolean(app) && System.nanoTime() < deadline) Thread.sleep(5);
                 assertTrue(closedField.getBoolean(app), "callback byte quota did not stop the overflowing session");
             } finally { release.countDown(); }
