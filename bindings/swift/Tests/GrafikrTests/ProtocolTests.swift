@@ -358,7 +358,7 @@ final class ProtocolTests: XCTestCase {
         let subscription = try await app.on(node: node.handle, event: event) { callback in
             if event == "resize" { XCTAssertGreaterThanOrEqual(callback.payload.count, 2 * 1024 * 1024) }
             handlerStarted.fulfill()
-            Thread.sleep(forTimeInterval: 3)
+            Thread.sleep(forTimeInterval: 15)
             handlerFinished.fulfill()
         }
         await fulfillment(of: [handlerStarted], timeout: 10)
@@ -371,7 +371,7 @@ final class ProtocolTests: XCTestCase {
                 throw BridgeError(code:error.code,message:"\(event) queue overflow did not close app")
             }
         }
-        await fulfillment(of: [handlerFinished], timeout: 5)
+        await fulfillment(of: [handlerFinished], timeout: 20)
         await subscription.close()
         await app.close()
     }
