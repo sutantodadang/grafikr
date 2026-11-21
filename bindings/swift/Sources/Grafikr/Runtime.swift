@@ -1,5 +1,9 @@
-import Crypto
 import Foundation
+#if os(Windows)
+import WinSDK
+#else
+import Crypto
+#endif
 
 public enum Runtime {
     private struct Manifest: Decodable {
@@ -175,9 +179,46 @@ public enum Runtime {
     private static func sha256(_ url: URL) throws -> String {
         let input = try FileHandle(forReadingFrom: url)
         defer { try? input.close() }
+        #if os(Windows)
+        var algorithm: BCRYPT_ALG_HANDLE?
+        let algorithmName = Array("SHA256".utf16) + [0]
+        let openStatus = algorithmName.withUnsafeBufferPointer {
+            BCryptOpenAlgorithmProvider(&algorithm, $0.baseAddress, nil, 0)
+        }
+        guard openStatus >= 0, let algorithm else { throw failure("runtime_hash", "Windows SHA-256 provider could not be opened") }
+        defer { _ = BCryptCloseAlgorithmProvider(algorithm, 0) }
+
+        let propertyName = Array("ObjectLength".utf16) + [0]
+        var objectLength: ULONG = 0
+        var propertyLength: ULONG = 0
+        let propertyStatus = propertyName.withUnsafeBufferPointer {
+            BCryptGetProperty(algorithm, $0.baseAddress, &objectLength, ULONG(MemoryLayout<ULONG>.size), &propertyLength, 0)
+        }
+        guard propertyStatus >= 0 else { throw failure("runtime_hash", "Windows SHA-256 provider metadata is unavailable") }
+        var object = [UInt8](repeating: 0, count: Int(objectLength))
+        var hash: BCRYPT_HASH_HANDLE?
+        let createStatus = object.withUnsafeMutableBufferPointer {
+            BCryptCreateHash(algorithm, &hash, $0.baseAddress, objectLength, nil, 0, 0)
+        }
+        guard createStatus >= 0, let hash else { throw failure("runtime_hash", "Windows SHA-256 hash could not be created") }
+        defer { _ = BCryptDestroyHash(hash) }
+        while var chunk = try input.read(upToCount: 1_048_576), !chunk.isEmpty {
+            let status = chunk.withUnsafeMutableBytes {
+                BCryptHashData(hash, $0.baseAddress?.assumingMemoryBound(to: UCHAR.self), ULONG($0.count), 0)
+            }
+            guard status >= 0 else { throw failure("runtime_hash", "Windows SHA-256 update failed") }
+        }
+        var digest = [UInt8](repeating: 0, count: 32)
+        let finishStatus = digest.withUnsafeMutableBufferPointer {
+            BCryptFinishHash(hash, $0.baseAddress, ULONG($0.count), 0)
+        }
+        guard finishStatus >= 0 else { throw failure("runtime_hash", "Windows SHA-256 finalization failed") }
+        return digest.map { String(format: "%02x", $0) }.joined()
+        #else
         var digest = SHA256()
         while let chunk = try input.read(upToCount: 1_048_576), !chunk.isEmpty { digest.update(data: chunk) }
         return digest.finalize().map { String(format: "%02x", $0) }.joined()
+        #endif
     }
 
     private static func currentTarget() throws -> String {
