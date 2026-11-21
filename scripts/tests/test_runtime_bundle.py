@@ -255,6 +255,18 @@ libmissing.so.1 => not found
         self.assertEqual((output / "bin/grafikr-host.exe").read_bytes(), original)
         validate_manifest(output)
 
+    @unittest.skipIf(os.name == "nt", "Unix executable mode bits are not available on Windows")
+    def test_install_preserves_host_executable_mode(self):
+        source = self.root / "executable-source"
+        source.mkdir()
+        write_fixture_bundle(source)
+        host = source / "bin/grafikr-host.exe"
+        host.chmod(0o755)
+
+        output = install_bundle(source, self.root / "cache/executable-runtime")
+
+        self.assertTrue(os.access(output / "bin/grafikr-host.exe", os.X_OK))
+
     def test_install_rejects_junction_destination(self):
         source = self.root / "source-for-junction"
         source.mkdir()

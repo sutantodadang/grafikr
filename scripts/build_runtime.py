@@ -201,8 +201,8 @@ def install_bundle(source: Path, destination: Path) -> Path:
             source_file = source.joinpath(*relative.parts)
             staged_file = stage.joinpath(*relative.parts)
             staged_file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source_file, staged_file, follow_symlinks=False)
-        shutil.copyfile(source / MANIFEST_PATH, stage / MANIFEST_PATH)
+            shutil.copy2(source_file, staged_file, follow_symlinks=False)
+        shutil.copy2(source / MANIFEST_PATH, stage / MANIFEST_PATH)
         validate_manifest(stage, manifest["target"])
         listed = {entry["path"].casefold() for entry in manifest["files"]}
         actual = {
@@ -300,7 +300,7 @@ def _build_config_digest(target: str) -> str:
 def _copy(source: Path, root: Path, relative: str) -> Path:
     destination = root / relative
     destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source, destination)
+    shutil.copy2(source, destination)
     return destination
 
 
