@@ -1,8 +1,18 @@
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
+use std::sync::{Mutex, MutexGuard};
+
+static PROCESS_TEST_LOCK: Mutex<()> = Mutex::new(());
+
+fn process_test_guard() -> MutexGuard<'static, ()> {
+    PROCESS_TEST_LOCK
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
 
 #[test]
 fn split_utf8_request_gets_protocol_response_and_eof_stops_host() {
+    let _guard = process_test_guard();
     let mut child = Command::new(env!("CARGO_BIN_EXE_grafikr-host"))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -37,6 +47,7 @@ fn split_utf8_request_gets_protocol_response_and_eof_stops_host() {
 
 #[test]
 fn version_is_the_only_normal_stdout_line() {
+    let _guard = process_test_guard();
     let output = Command::new(env!("CARGO_BIN_EXE_grafikr-host"))
         .arg("--version")
         .output()
@@ -50,6 +61,7 @@ fn version_is_the_only_normal_stdout_line() {
 
 #[test]
 fn eof_mid_frame_reports_terminal_protocol_error() {
+    let _guard = process_test_guard();
     let mut child = Command::new(env!("CARGO_BIN_EXE_grafikr-host"))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -73,6 +85,7 @@ fn eof_mid_frame_reports_terminal_protocol_error() {
 
 #[test]
 fn malformed_json_is_rejected_as_a_terminal_protocol_error() {
+    let _guard = process_test_guard();
     let mut child = Command::new(env!("CARGO_BIN_EXE_grafikr-host"))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -93,6 +106,7 @@ fn malformed_json_is_rejected_as_a_terminal_protocol_error() {
 
 #[test]
 fn oversized_frame_is_rejected_and_stops_the_host() {
+    let _guard = process_test_guard();
     let mut child = Command::new(env!("CARGO_BIN_EXE_grafikr-host"))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -114,6 +128,7 @@ fn oversized_frame_is_rejected_and_stops_the_host() {
 
 #[test]
 fn non_hello_request_is_rejected_without_preventing_a_valid_handshake() {
+    let _guard = process_test_guard();
     let mut child = Command::new(env!("CARGO_BIN_EXE_grafikr-host"))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -144,6 +159,7 @@ fn non_hello_request_is_rejected_without_preventing_a_valid_handshake() {
 
 #[test]
 fn wrong_major_hello_stops_before_following_window_creation() {
+    let _guard = process_test_guard();
     let mut child = Command::new(env!("CARGO_BIN_EXE_grafikr-host"))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -177,6 +193,7 @@ fn wrong_major_hello_stops_before_following_window_creation() {
 
 #[test]
 fn eof_drains_every_accepted_request_across_driver_batches() {
+    let _guard = process_test_guard();
     let mut child = Command::new(env!("CARGO_BIN_EXE_grafikr-host"))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
