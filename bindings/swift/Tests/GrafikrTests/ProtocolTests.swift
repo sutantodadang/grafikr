@@ -354,6 +354,7 @@ final class ProtocolTests: XCTestCase {
         let node = try await app.createNode(window: window, widget: widget, properties: properties)
 
         let handlerStarted = expectation(description: "callback starts")
+        let handlerFinished = expectation(description: "callback finishes")
         let blockingHandler = DispatchSemaphore(value: 1)
         let releaseHandler = DispatchSemaphore(value: 0)
         let subscription = try await app.on(node: node.handle, event: event) { callback in
@@ -361,6 +362,7 @@ final class ProtocolTests: XCTestCase {
             if event == "resize" { XCTAssertGreaterThanOrEqual(callback.payload.count, 2 * 1024 * 1024) }
             handlerStarted.fulfill()
             _ = releaseHandler.wait(timeout: .now() + 15)
+            handlerFinished.fulfill()
         }
         await fulfillment(of: [handlerStarted], timeout: 10)
         try await Task.sleep(nanoseconds: 1_000_000_000)
@@ -373,6 +375,7 @@ final class ProtocolTests: XCTestCase {
             }
         }
         releaseHandler.signal()
+        await fulfillment(of: [handlerFinished], timeout: 5)
         await subscription.close()
         await app.close()
     }
