@@ -1,5 +1,9 @@
 local grafikr = require("grafikr")
 local uv = require("luv")
+local function mark(stage)
+  io.stderr:write("Lua protocol stage passed: " .. stage .. "\n")
+  io.stderr:flush()
+end
 assert(grafikr.MAX_FRAME == 8 * 1024 * 1024)
 assert(grafikr.MAX_OUTSTANDING_REQUESTS == 256)
 local limited = setmetatable({ pending_count=256, closed=false }, grafikr.App)
@@ -40,6 +44,7 @@ uv.run()
 assert(received and received.event == "click", "early subscription event was dropped")
 assert(callback_error and callback_error:find("callback failure probe", 1, true), "callback errors were not delivered")
 assert(nested_request_completed, "nested callback request did not complete")
+mark("callbacks")
 
 local values_received
 grafikr.start(host, function(app)
@@ -67,6 +72,7 @@ grafikr.start(host, function(app)
 end)
 uv.run()
 assert(values_received, "state/value contract checks did not finish")
+mark("values")
 
 local collection_received
 grafikr.start(host, function(app)
@@ -98,4 +104,5 @@ grafikr.start(host, function(app)
 end)
 uv.run()
 assert(collection_received, "Lua collection provider failed its live range flow")
+mark("collections")
 print("Grafikr Lua protocol checks passed")

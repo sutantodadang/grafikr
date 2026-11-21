@@ -330,7 +330,10 @@ def run_binding_checks(
                 except (TypeError, ValueError) as error:
                     check_result["stderr"] = str(error)
                 except subprocess.TimeoutExpired as error:
-                    check_result["stderr"] = f"check timed out: {error.timeout} seconds"
+                    stdout = error.stdout.decode("utf-8", "replace") if isinstance(error.stdout, bytes) else error.stdout or ""
+                    stderr = error.stderr.decode("utf-8", "replace") if isinstance(error.stderr, bytes) else error.stderr or ""
+                    check_result["stdout"] = stdout[-MAX_CAPTURED_OUTPUT_CHARS:]
+                    check_result["stderr"] = f"check timed out: {error.timeout} seconds\n{stderr[-MAX_CAPTURED_OUTPUT_CHARS:]}"
             check_result["finished_at"] = utc_now()
             results.append(check_result)
 

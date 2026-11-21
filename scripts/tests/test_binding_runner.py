@@ -299,7 +299,7 @@ class BindingRunnerTests(unittest.TestCase):
         self.matrix(
             {
                 "cwd": ".",
-                "checks": [{"name": "slow", "argv": [sys.executable, "-c", "import time; time.sleep(1)"], "timeout_seconds": 0.02}],
+                "checks": [{"name": "slow", "argv": [sys.executable, "-c", "import sys,time; print('partial stdout', flush=True); print('partial stderr', file=sys.stderr, flush=True); time.sleep(1)"], "timeout_seconds": 0.02}],
                 "helper_paths": ["helper.py"],
             }
         )
@@ -307,6 +307,8 @@ class BindingRunnerTests(unittest.TestCase):
         self.assertFalse(self.run_suite())
         evidence = json.loads(self.out.read_text(encoding="utf-8"))
         self.assertIn("timed out", evidence["checks"][0]["stderr"])
+        self.assertIn("partial stderr", evidence["checks"][0]["stderr"])
+        self.assertIn("partial stdout", evidence["checks"][0]["stdout"])
 
     def test_contract_omission_of_widget_event_fails_after_checks_run(self):
         cases_path = self.root / "cases.json"
