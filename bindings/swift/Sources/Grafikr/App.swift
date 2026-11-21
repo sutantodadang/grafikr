@@ -22,6 +22,7 @@ public final class App: @unchecked Sendable {
     private var queuedCallbackBytes = 0
     private var frame = Data()
     private var closed = false
+    private var terminationRequested = false
 
     public convenience init(host: URL) throws {
         try self.init(host: host, environment: ProcessInfo.processInfo.environment)
@@ -117,7 +118,7 @@ public final class App: @unchecked Sendable {
 
     public func close() async {
         _ = try? await request("shutdown", [:]); synchronized { failLocked(BridgeError(code:"connection_closed",message:"App is closed")) }
-        try? input.fileHandleForWriting.close(); if process.isRunning { process.terminate() }
+        try? input.fileHandleForWriting.close(); terminateProcess()
         if process.isRunning { try? await Task.sleep(nanoseconds: 5_000_000_000); if process.isRunning { process.interrupt() } }
     }
 
@@ -141,7 +142,7 @@ public final class App: @unchecked Sendable {
                           queuedCallbackBytes + bytes <= Self.maxQueuedCallbackBytes else {
                         failLocked(BridgeError(code:"queue_full",message:"Callback queue quota reached"))
                         lock.unlock()
-                        if process.isRunning { process.terminate() }
+                        terminateProcess()
                         return
                     }
                     queuedCallbacks += 1
@@ -179,6 +180,14 @@ public final class App: @unchecked Sendable {
             failLocked(error)
         }
         lock.unlock()
+    }
+    private func terminateProcess() {
+        let shouldTerminate = synchronized {
+            guard !terminationRequested else { return false }
+            terminationRequested = true
+            return true
+        }
+        if shouldTerminate && process.isRunning { process.terminate() }
     }
     private func failLocked(_ error: Error) { closed=true; pending.values.forEach{$0.resume(throwing:error)}; pending.removeAll() }
     private func synchronized<T>(_ body: () throws -> T) rethrows -> T { lock.lock(); defer { lock.unlock() }; return try body() }

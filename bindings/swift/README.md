@@ -1,7 +1,8 @@
 # Grafikr Swift SDK
 
-Swift 6 package for Windows, Linux, and macOS. Swift Crypto supplies portable
-SHA-256 verification for the runtime installer. `Runtime.install(bundle:cache:)`
+Swift 6 package for Windows, Linux, and macOS. Linux and macOS use Swift Crypto;
+Windows uses the Windows CNG provider for SHA-256 verification.
+`Runtime.install(bundle:cache:)`
 validates an unpacked runtime manifest and SHA-256 file digests, installs into
 an OS/architecture-specific cache, and returns the absolute host URL. The
 `grafikr-runtime <bundle-dir> <cache-dir>` executable performs the same install
@@ -10,7 +11,7 @@ for setup scripts. Neither path downloads a runtime implicitly.
 The SDK uses Foundation process/JSON support, argument arrays, bounded LF
 frames, async request correlation, and explicit close and subscription
 lifecycle. Windows/Linux builds require the Swift 6.4 platform toolchains in
-the release matrix; those are not available in this workspace.
+the release matrix.
 
 `App.onError` receives thrown event-handler errors without stopping later
 callbacks. `Subscription.close()` removes the local handler before waiting for

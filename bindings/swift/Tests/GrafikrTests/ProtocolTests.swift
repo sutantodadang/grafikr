@@ -327,8 +327,11 @@ final class ProtocolTests: XCTestCase {
         await app.close()
     }
 
-    func testBlockedCallbackQueueEnforcesMessageAndByteLimits() async throws {
+    func testBlockedCallbackQueueEnforcesMessageLimit() async throws {
         try await assertCallbackOverflow(flag: "GRAFIKR_FIXTURE_EVENT_COUNT_OVERFLOW", event: "select")
+    }
+
+    func testBlockedCallbackQueueEnforcesByteLimit() async throws {
         try await assertCallbackOverflow(flag: "GRAFIKR_FIXTURE_EVENT_BYTES_OVERFLOW", event: "resize")
     }
 

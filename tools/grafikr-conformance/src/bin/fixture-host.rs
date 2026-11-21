@@ -147,7 +147,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                 Some("resize")
                     if std::env::var_os("GRAFIKR_FIXTURE_EVENT_BYTES_OVERFLOW").is_some() =>
                 {
-                    Some(17)
+                    Some(9)
                 }
                 _ => None,
             }
@@ -220,7 +220,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
             output.flush()?;
             std::thread::sleep(Duration::from_millis(100));
             let padding_bytes = match subscribed_event.as_deref() {
-                Some("resize") => 1024 * 1024,
+                Some("resize") => 2 * 1024 * 1024,
                 Some("select") => 4 * 1024,
                 _ => 24 * 1024,
             };

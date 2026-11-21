@@ -117,7 +117,7 @@ function assertRuntimeBundleChecks(): void
             'path'=>'bin/grafikr-host','size'=>filesize($host),'sha256'=>hash_file('sha256',$host),'role'=>'host',
         ]]];
         file_put_contents($manifestPath, json_encode($manifest, JSON_THROW_ON_ERROR));
-        if (Grafikr\Runtime::hostPath($root) !== $host) throw new RuntimeException('verified PHP runtime path mismatch');
+        if (Grafikr\Runtime::hostPath($root) !== realpath($host)) throw new RuntimeException('verified PHP runtime path mismatch');
         file_put_contents($host, 'tampered');
         try { Grafikr\Runtime::hostPath($root); throw new RuntimeException('tampered PHP runtime was accepted'); }
         catch (Grafikr\BridgeException $error) { if ($error->codeName !== 'runtime_checksum') throw $error; }

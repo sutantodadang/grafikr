@@ -17,7 +17,7 @@ if(APPLE)
     "-framework CoreText"
     "-framework Metal"
     "-framework Carbon"
-    objc)
+    "-lobjc")
 endif()
 if(GRAFIKR_FFI_STATIC)
   add_library(grafikr_ffi STATIC IMPORTED GLOBAL)

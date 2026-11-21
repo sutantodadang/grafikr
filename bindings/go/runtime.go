@@ -81,11 +81,11 @@ func InstallRuntime(bundleDir, cacheDir string) (string, error) {
 		if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
 			return "", err
 		}
-		if err := copyRuntimeFile(source, destination); err != nil {
+		if err := copyRuntimeFile(source, destination, file.Role == "host"); err != nil {
 			return "", err
 		}
 	}
-	if err := copyRuntimeFile(filepath.Join(bundle, "manifest.json"), filepath.Join(stage, "manifest.json")); err != nil {
+	if err := copyRuntimeFile(filepath.Join(bundle, "manifest.json"), filepath.Join(stage, "manifest.json"), false); err != nil {
 		return "", err
 	}
 	if _, err := verifyRuntime(stage, target); err != nil {
@@ -198,7 +198,7 @@ func safeRuntimePath(value string) (string, error) {
 	return filepath.FromSlash(value), nil
 }
 
-func copyRuntimeFile(source, destination string) error {
+func copyRuntimeFile(source, destination string, executable bool) error {
 	input, err := os.Open(source)
 	if err != nil {
 		return err
@@ -211,7 +211,11 @@ func copyRuntimeFile(source, destination string) error {
 	if !info.Mode().IsRegular() {
 		return fmt.Errorf("runtime file is not regular: %s", source)
 	}
-	output, err := os.OpenFile(destination, os.O_CREATE|os.O_EXCL|os.O_WRONLY, info.Mode().Perm())
+	mode := info.Mode().Perm()
+	if executable && runtime.GOOS != "windows" {
+		mode |= 0o755
+	}
+	output, err := os.OpenFile(destination, os.O_CREATE|os.O_EXCL|os.O_WRONLY, mode)
 	if err != nil {
 		return err
 	}

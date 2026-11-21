@@ -653,7 +653,7 @@ func TestInstallRuntimeVerifiesAndCachesUnderUnicodePath(t *testing.T) {
 		t.Fatal(err)
 	}
 	host := []byte("runtime fixture")
-	if err := os.WriteFile(filepath.Join(bundle, "bin", "grafikr-host"), host, 0o755); err != nil {
+	if err := os.WriteFile(filepath.Join(bundle, "bin", "grafikr-host"), host, 0o644); err != nil {
 		t.Fatal(err)
 	}
 	digest := sha256.Sum256(host)
@@ -683,6 +683,15 @@ func TestInstallRuntimeVerifiesAndCachesUnderUnicodePath(t *testing.T) {
 	}
 	if data, err := os.ReadFile(path); err != nil || string(data) != string(host) {
 		t.Fatalf("installed host mismatch: data=%q err=%v", data, err)
+	}
+	if runtime.GOOS != "windows" {
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm()&0o111 == 0 {
+			t.Fatalf("installed host is not executable: mode=%v", info.Mode().Perm())
+		}
 	}
 	if err := os.WriteFile(path, []byte("tampered"), 0o755); err != nil {
 		t.Fatal(err)

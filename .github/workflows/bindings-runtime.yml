@@ -140,8 +140,8 @@ jobs:
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             rtk proxy luarocks config cmake_generator "NMake Makefiles"
           fi
-          rtk proxy luarocks install dkjson 2.11-1
-          rtk proxy luarocks install luv 1.53.0-1
+          rtk proxy luarocks --lua-version=5.4 --tree .lua install dkjson 2.11-1
+          rtk proxy luarocks --lua-version=5.4 --tree .lua install luv 1.53.0-1
       - name: Build and install Lua SDK rock
         working-directory: bindings/lua
         shell: pwsh
@@ -185,10 +185,13 @@ jobs:
       - name: Run the Dart SDK unit suite
         run: rtk proxy python -m scripts.run_binding_checks --sdk dart --suite unit --bundle target/runtime/current --out .artifacts/bindings/dart-unit.json
       - name: Run the Lua SDK unit suite
+        env:
+          GRAFIKR_LUA54_MODULES: ${{ github.workspace }}/.lua
         run: rtk proxy python -m scripts.run_binding_checks --sdk lua --suite unit --bundle target/runtime/current --out .artifacts/bindings/lua-unit.json
       - name: Run every SDK contract suite
         env:
           GRAFIKR_LUA54: lua
+          GRAFIKR_LUA54_MODULES: ${{ github.workspace }}/.lua
         run: rtk proxy python -m scripts.run_binding_checks --sdk all --suite contract --bundle target/runtime/current --fixture-host ${{ runner.os == 'Windows' && 'target/debug/fixture-host.exe' || 'target/debug/fixture-host' }} --out .artifacts/bindings/all-contract-${{ matrix.target }}.json
       - name: Run the Ruby SDK suite
         if: matrix.target != 'aarch64-pc-windows-msvc'
