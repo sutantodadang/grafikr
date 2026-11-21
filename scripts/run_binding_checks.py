@@ -267,9 +267,9 @@ def run_binding_checks(
                     for marker, value in replacements.items():
                         argv = [argument.replace(marker, value) for argument in argv]
                     lua_executable = None
-                    if argv[0] == "lua" and environment.get("GRAFIKR_LUA54"):
-                        argv[0] = environment["GRAFIKR_LUA54"]
-                        lua_executable = argv[0]
+                    if argv[0] == "lua":
+                        lua_executable = environment.get("GRAFIKR_LUA54", "lua")
+                        argv[0] = lua_executable
                     if argv[0] in {"python", "python3"}:
                         argv[0] = sys.executable
                     check_result["argv"] = argv

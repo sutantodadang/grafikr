@@ -7,6 +7,25 @@ private actor RequestResults {
     func count(_ code: String) -> Int { codes.filter { $0 == code }.count }
 }
 
+private final class CallbackGate: @unchecked Sendable {
+    private let condition = NSCondition()
+    private var released = false
+
+    func wait(untilReleased onWaiting: () -> Void) {
+        condition.lock()
+        onWaiting()
+        while !released { condition.wait() }
+        condition.unlock()
+    }
+
+    func open() {
+        condition.lock()
+        released = true
+        condition.broadcast()
+        condition.unlock()
+    }
+}
+
 final class ProtocolTests: XCTestCase {
     func testFrameLimit() { XCTAssertEqual(App.maxFrame, 8 * 1024 * 1024) }
     func testOutstandingRequestLimit() { XCTAssertEqual(App.maxOutstandingRequests, 256) }
@@ -355,10 +374,11 @@ final class ProtocolTests: XCTestCase {
 
         let handlerStarted = expectation(description: "callback starts")
         let handlerFinished = expectation(description: "callback finishes")
+        let callbackGate = CallbackGate()
+        defer { callbackGate.open() }
         let subscription = try await app.on(node: node.handle, event: event) { callback in
             if event == "resize" { XCTAssertGreaterThanOrEqual(callback.payload.count, 2 * 1024 * 1024) }
-            handlerStarted.fulfill()
-            Thread.sleep(forTimeInterval: 15)
+            callbackGate.wait { handlerStarted.fulfill() }
             handlerFinished.fulfill()
         }
         await fulfillment(of: [handlerStarted], timeout: 10)
@@ -372,6 +392,7 @@ final class ProtocolTests: XCTestCase {
             }
         }
         await subscription.close()
+        callbackGate.open()
         await fulfillment(of: [handlerFinished], timeout: 20)
         await app.close()
     }

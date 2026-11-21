@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -188,6 +189,29 @@ class BindingRunnerTests(unittest.TestCase):
         evidence = json.loads(self.out.read_text(encoding="utf-8"))
         self.assertEqual(evidence["checks"][0]["argv"][0], sys.executable)
         self.assertEqual(evidence["checks"][0]["stdout"].splitlines(), ["True"] * 4)
+
+    def test_lua_module_tree_applies_without_executable_override(self):
+        self.matrix(
+            {
+                "cwd": ".",
+                "checks": [{"name": "lua", "argv": ["lua", "-e", "return true"]}],
+                "helper_paths": ["helper.py"],
+            }
+        )
+        modules = self.root / "lua54"
+        with patch.dict(os.environ, {"GRAFIKR_LUA54_MODULES": str(modules)}):
+            os.environ.pop("GRAFIKR_LUA54", None)
+            with patch("scripts.run_binding_checks.subprocess.run") as run:
+                run.return_value = subprocess.CompletedProcess(["lua"], 0, "", "")
+                self.assertTrue(self.run_suite())
+
+        child_environment = run.call_args.kwargs["env"]
+        lua_share = modules / "share" / "lua" / "5.4"
+        lua_lib = modules / "lib" / "lua" / "5.4"
+        self.assertEqual(run.call_args.args[0][0], "lua")
+        self.assertEqual(child_environment["LUA"], "lua")
+        self.assertEqual(child_environment["LUA_PATH"], f"{lua_share / '?.lua'};{lua_share / '?/init.lua'};;")
+        self.assertIn(str(lua_lib / "?.so"), child_environment["LUA_CPATH"])
 
     def test_runtime_classifier_placeholder_uses_the_selected_bundle_target(self):
         (self.bundle / "manifest.json").write_text(
