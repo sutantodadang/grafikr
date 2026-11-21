@@ -355,13 +355,10 @@ final class ProtocolTests: XCTestCase {
 
         let handlerStarted = expectation(description: "callback starts")
         let handlerFinished = expectation(description: "callback finishes")
-        let blockingHandler = DispatchSemaphore(value: 1)
-        let releaseHandler = DispatchSemaphore(value: 0)
         let subscription = try await app.on(node: node.handle, event: event) { callback in
-            guard blockingHandler.wait(timeout: .now()) == .success else { return }
             if event == "resize" { XCTAssertGreaterThanOrEqual(callback.payload.count, 2 * 1024 * 1024) }
             handlerStarted.fulfill()
-            _ = releaseHandler.wait(timeout: .now() + 15)
+            Thread.sleep(forTimeInterval: 3)
             handlerFinished.fulfill()
         }
         await fulfillment(of: [handlerStarted], timeout: 10)
@@ -374,7 +371,6 @@ final class ProtocolTests: XCTestCase {
                 throw BridgeError(code:error.code,message:"\(event) queue overflow did not close app")
             }
         }
-        releaseHandler.signal()
         await fulfillment(of: [handlerFinished], timeout: 5)
         await subscription.close()
         await app.close()
