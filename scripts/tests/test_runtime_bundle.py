@@ -144,6 +144,15 @@ libmissing.so.1 => not found
             config,
         )
 
+    def test_macos_cmake_package_exports_framework_and_objc_dependencies(self):
+        _cmake_config(self.root, "macos")
+        config = (self.root / "cmake/GrafikrConfig.cmake").read_text(encoding="utf-8")
+        self.assertIn("foreach(GRAFIKR_FRAMEWORK AppKit Foundation CoreFoundation CoreGraphics CoreVideo CoreText Metal Carbon)", config)
+        self.assertIn("find_library(GRAFIKR_${GRAFIKR_FRAMEWORK}_FRAMEWORK NAMES ${GRAFIKR_FRAMEWORK} REQUIRED)", config)
+        self.assertIn('list(APPEND GRAFIKR_APPLE_FRAMEWORKS "${GRAFIKR_${GRAFIKR_FRAMEWORK}_FRAMEWORK}")', config)
+        self.assertIn("find_library(GRAFIKR_OBJC_LIBRARY NAMES objc REQUIRED)", config)
+        self.assertIn('INTERFACE_LINK_LIBRARIES "${GRAFIKR_APPLE_FRAMEWORKS}"', config)
+
     def test_manifest_rejects_traversal_absolute_unc_duplicates_and_hash_mismatch(self):
         invalid_paths = ["../outside", "C:/outside", "//server/share/file", "bin/../../outside"]
         for index, path in enumerate(invalid_paths):
