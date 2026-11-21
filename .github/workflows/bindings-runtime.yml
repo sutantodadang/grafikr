@@ -193,6 +193,7 @@ jobs:
         env:
           GRAFIKR_LUA54: lua
           GRAFIKR_LUA54_MODULES: ${{ github.workspace }}/.lua
+          MAKE: ${{ runner.os == 'Windows' && 'nmake' || 'make' }}
         run: rtk proxy python -m scripts.run_binding_checks --sdk all --suite contract --bundle target/runtime/current --fixture-host ${{ runner.os == 'Windows' && 'target/debug/fixture-host.exe' || 'target/debug/fixture-host' }} --out .artifacts/bindings/all-contract-${{ matrix.target }}.json
       - name: Run the Ruby SDK suite
         if: matrix.target != 'aarch64-pc-windows-msvc'
@@ -208,7 +209,11 @@ jobs:
       - name: Run the Go SDK tests
         run: rtk proxy python -m scripts.run_binding_checks --sdk go --suite unit --bundle target/runtime/current --out .artifacts/bindings/go-unit.json
       - name: Run Java and Kotlin SDK checks
-        run: rtk proxy java -classpath bindings/jvm/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain -p bindings/jvm test --no-daemon
+        run: |
+          rtk proxy java -classpath bindings/jvm/gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain \
+            -p bindings/jvm test --no-daemon \
+            -PgrafikrRuntimeBundle=target/runtime/current \
+            -PgrafikrRuntimeClassifier=${{ matrix.target }}
       - name: Publish and verify Java and Kotlin Maven consumers
         run: rtk proxy python -m scripts.verify_jvm_package --bundle target/runtime/current --out target/packages/jvm-maven
       - name: Install and smoke-test Python wheel

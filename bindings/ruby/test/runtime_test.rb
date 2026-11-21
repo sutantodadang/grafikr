@@ -30,8 +30,9 @@ class RuntimeTest < Minitest::Test
 
   def test_bundle_returns_verified_absolute_host_path
     with_bundle do |root, host, _manifest|
-      assert_equal host, Grafikr::Runtime.host_path(root)
-      assert_equal File.absolute_path(host), host
+      verified_host = Grafikr::Runtime.host_path(root)
+      assert_equal File.realpath(host), verified_host
+      assert_equal File.absolute_path(verified_host), verified_host
     end
   end
 
@@ -60,7 +61,7 @@ class RuntimeTest < Minitest::Test
 
   def test_wrong_platform_bundle_is_rejected
     with_bundle do |root, _host, manifest|
-      manifest["target"] = "aarch64-apple-darwin"
+      manifest["target"] = (Grafikr::Runtime::TARGETS.values - [Grafikr::Runtime.send(:current_target)]).first
       File.write(File.join(root, "manifest.json"), JSON.generate(manifest))
       error = assert_raises(Grafikr::Error) { Grafikr::Runtime.host_path(root) }
       assert_equal "runtime_target", error.code
