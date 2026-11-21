@@ -371,8 +371,8 @@ final class ProtocolTests: XCTestCase {
                 throw BridgeError(code:error.code,message:"\(event) queue overflow did not close app")
             }
         }
-        await fulfillment(of: [handlerFinished], timeout: 20)
         await subscription.close()
+        await fulfillment(of: [handlerFinished], timeout: 20)
         await app.close()
     }
 
