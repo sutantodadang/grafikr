@@ -146,12 +146,13 @@ jobs:
         working-directory: bindings/lua
         shell: pwsh
         run: |
+          $luaTree = [System.IO.Path]::GetFullPath((Join-Path (Get-Location) "..\..\.lua"))
           if ($IsWindows) {
             $linkDir = Join-Path $env:VCToolsInstallDir "bin\Host$($env:VSCMD_ARG_HOST_ARCH)\$($env:VSCMD_ARG_TGT_ARCH)"
             $env:Path = "$linkDir;$env:Path"
             rtk proxy luarocks config variables.LD link
           }
-          rtk proxy luarocks make grafikr-1.1.0-1.rockspec
+          rtk proxy luarocks --tree $luaTree make grafikr-1.1.0-1.rockspec
       - name: Test bundle validation
         run: rtk proxy python -m unittest discover -s scripts/tests -p test_runtime_bundle.py -v
       - name: Test SDK coverage gates

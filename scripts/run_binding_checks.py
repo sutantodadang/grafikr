@@ -294,9 +294,9 @@ def run_binding_checks(
                             lua_share = module_root / "share" / "lua" / "5.4"
                             lua_lib = module_root / "lib" / "lua" / "5.4"
                             child_environment["LUA_PATH"] = (
-                                f"{lua_share / '?.lua'}{os.pathsep}{lua_share / '?/init.lua'}{os.pathsep}{os.pathsep}"
+                                f"{lua_share / '?.lua'};{lua_share / '?/init.lua'};;"
                             )
-                            child_environment["LUA_CPATH"] = os.pathsep.join(
+                            child_environment["LUA_CPATH"] = ";".join(
                                 [*(str(lua_lib / f"?.{extension}") for extension in ("dll", "so", "dylib")), "", ""]
                             )
                             if os.name == "nt":

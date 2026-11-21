@@ -157,8 +157,8 @@ class BindingRunnerTests(unittest.TestCase):
         loader_path = "PATH" if os.name == "nt" else "DYLD_LIBRARY_PATH" if sys.platform == "darwin" else "LD_LIBRARY_PATH"
         probe = (
             "import os; print(os.path.basename(os.getenv('LUA','')) == os.getenv('LUA_EXPECTED_EXECUTABLE')); "
-            "print('share/lua/5.4/?.lua' in os.getenv('LUA_PATH','').replace(chr(92),'/')); "
-            "print('lib/lua/5.4/?.dll' in os.getenv('LUA_CPATH','').replace(chr(92),'/')); "
+            "print(os.getenv('LUA_PATH') == os.getenv('LUA_EXPECTED_PATH')); "
+            "print(os.getenv('LUA_CPATH') == os.getenv('LUA_EXPECTED_CPATH')); "
             f"print(os.getenv('LUA_MODULES_EXPECTED','') in os.getenv('{loader_path}',''))"
         )
         self.matrix(
@@ -169,13 +169,19 @@ class BindingRunnerTests(unittest.TestCase):
             }
         )
         modules = self.root / "lua54"
+        lua_share = modules / "share" / "lua" / "5.4"
+        lua_lib = modules / "lib" / "lua" / "5.4"
         with patch.dict(
             os.environ,
             {
                 "GRAFIKR_LUA54": sys.executable,
                 "GRAFIKR_LUA54_MODULES": str(modules),
-                "LUA_MODULES_EXPECTED": str(modules / "lib" / "lua" / "5.4"),
+                "LUA_MODULES_EXPECTED": str(lua_lib),
                 "LUA_EXPECTED_EXECUTABLE": Path(sys.executable).name,
+                "LUA_EXPECTED_PATH": f"{lua_share / '?.lua'};{lua_share / '?/init.lua'};;",
+                "LUA_EXPECTED_CPATH": ";".join(
+                    [*(str(lua_lib / f"?.{extension}") for extension in ("dll", "so", "dylib")), "", ""]
+                ),
             },
         ):
             self.assertTrue(self.run_suite())
