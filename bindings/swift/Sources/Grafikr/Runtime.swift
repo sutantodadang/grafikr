@@ -194,14 +194,16 @@ public enum Runtime {
         let propertyStatus = propertyName.withUnsafeBufferPointer {
             BCryptGetProperty(algorithm, $0.baseAddress, &objectLength, ULONG(MemoryLayout<ULONG>.size), &propertyLength, 0)
         }
-        guard propertyStatus >= 0 else { throw failure("runtime_hash", "Windows SHA-256 provider metadata is unavailable") }
+        guard propertyStatus >= 0, propertyLength == ULONG(MemoryLayout<ULONG>.size), objectLength > 0 else {
+            throw failure("runtime_hash", "Windows SHA-256 provider metadata is unavailable")
+        }
         var object = [UInt8](repeating: 0, count: Int(objectLength))
         var hash: BCRYPT_HASH_HANDLE?
         let createStatus = object.withUnsafeMutableBufferPointer {
             BCryptCreateHash(algorithm, &hash, $0.baseAddress, objectLength, nil, 0, 0)
         }
+        defer { if let hash { _ = BCryptDestroyHash(hash) } }
         guard createStatus >= 0, let hash else { throw failure("runtime_hash", "Windows SHA-256 hash could not be created") }
-        defer { _ = BCryptDestroyHash(hash) }
         while var chunk = try input.read(upToCount: 1_048_576), !chunk.isEmpty {
             let status = chunk.withUnsafeMutableBytes {
                 BCryptHashData(hash, $0.baseAddress?.assumingMemoryBound(to: UCHAR.self), ULONG($0.count), 0)
