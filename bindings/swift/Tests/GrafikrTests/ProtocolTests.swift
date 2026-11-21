@@ -351,8 +351,11 @@ final class ProtocolTests: XCTestCase {
         let node = try await app.createNode(window: window, widget: widget, properties: properties)
 
         let handlerStarted = expectation(description: "callback starts")
+        let firstHandler = DispatchSemaphore(value: 0)
         let releaseHandler = DispatchSemaphore(value: 0)
         let subscription = try await app.on(node: node.handle, event: event) { _ in
+            guard firstHandler.wait(timeout: .now()) == .timedOut else { return }
+            firstHandler.signal()
             handlerStarted.fulfill()
             _ = releaseHandler.wait(timeout: .now() + 15)
         }
