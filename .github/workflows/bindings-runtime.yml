@@ -192,7 +192,7 @@ jobs:
         run: rtk proxy python -m scripts.run_binding_checks --sdk all --suite contract --bundle target/runtime/current --fixture-host ${{ runner.os == 'Windows' && 'target/debug/fixture-host.exe' || 'target/debug/fixture-host' }} --out .artifacts/bindings/all-contract-${{ matrix.target }}.json
       - name: Run the Ruby SDK suite
         if: matrix.target != 'aarch64-pc-windows-msvc'
-        run: rtk proxy python -m scripts.run_binding_checks --sdk ruby --suite unit --bundle target/runtime/current --out .artifacts/bindings/ruby-unit.json
+        run: rtk proxy python -m scripts.run_binding_checks --sdk ruby --suite unit --bundle target/runtime/current --fixture-host ${{ runner.os == 'Windows' && 'target/debug/fixture-host.exe' || 'target/debug/fixture-host' }} --out .artifacts/bindings/ruby-unit.json
       - name: Validate the PHP Composer manifest and run its SDK suite
         if: matrix.target != 'aarch64-pc-windows-msvc'
         run: rtk proxy composer validate --strict --no-check-version --working-dir bindings/php

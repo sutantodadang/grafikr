@@ -67,7 +67,8 @@ local function fixture(root, relative, content, digest, record_path)
   return metadata
 end
 
-local parent = assert(uv.fs_mkdtemp(join(uv.os_tmpdir(), "grafikr-lua-runtime-XXXXXX")))
+local temp_dir = assert(uv.fs_realpath(uv.os_tmpdir()))
+local parent = assert(uv.fs_mkdtemp(join(temp_dir, "grafikr-lua-runtime-XXXXXX")))
 local ok, message = pcall(function()
   local bundle = join(parent, "bundle")
   local relative = "bin/grafikr-host" .. (package.config:sub(1, 1) == "\\" and ".exe" or "")
