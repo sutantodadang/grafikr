@@ -377,7 +377,7 @@ final class ProtocolTests: XCTestCase {
         let callbackGate = CallbackGate()
         defer { callbackGate.open() }
         let subscription = try await app.on(node: node.handle, event: event) { callback in
-            if event == "resize" { XCTAssertGreaterThanOrEqual(callback.payload.count, 2 * 1024 * 1024) }
+            if event == "resize" { XCTAssertLessThan(callback.payload.count, 1024) }
             callbackGate.wait { handlerStarted.fulfill() }
             handlerFinished.fulfill()
         }

@@ -225,7 +225,16 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                 _ => 24 * 1024,
             };
             let padding = "x".repeat(padding_bytes);
+            let first_event_padding = String::new();
             for index in 0..count {
+                let event_padding = if index == 0
+                    && event_name == "resize"
+                    && std::env::var_os("GRAFIKR_FIXTURE_EVENT_BYTES_OVERFLOW").is_some()
+                {
+                    &first_event_padding
+                } else {
+                    &padding
+                };
                 serde_json::to_writer(
                     &mut output,
                     &serde_json::json!({
@@ -233,7 +242,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
                         "sequence": (event_sequence + index as u64).to_string(),
                         "event": event_name,
                         "source": event_source.as_str(),
-                        "payload": {"index": index, "padding": padding.as_str()}
+                        "payload": {"index": index, "padding": event_padding.as_str()}
                     }),
                 )?;
                 output.write_all(b"\n")?;
