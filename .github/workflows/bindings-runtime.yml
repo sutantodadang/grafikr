@@ -184,7 +184,7 @@ jobs:
       - name: Run the Swift SDK unit suite
         run: rtk proxy python -m scripts.run_binding_checks --sdk swift --suite unit --bundle target/runtime/current --out .artifacts/bindings/swift-unit.json
       - name: Run the Dart SDK unit suite
-        run: rtk proxy python -m scripts.run_binding_checks --sdk dart --suite unit --bundle target/runtime/current --out .artifacts/bindings/dart-unit.json
+        run: rtk proxy python -m scripts.run_binding_checks --sdk dart --suite unit --bundle target/runtime/current --fixture-host ${{ runner.os == 'Windows' && 'target/debug/fixture-host.exe' || 'target/debug/fixture-host' }} --out .artifacts/bindings/dart-unit.json
       - name: Run the Lua SDK unit suite
         env:
           GRAFIKR_LUA54_MODULES: ${{ github.workspace }}/.lua
