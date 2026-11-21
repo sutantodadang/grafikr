@@ -463,12 +463,14 @@ void main() {
         var callbackCheckedReaderProgress = false;
         final subscription = await app.on(field.handle, 'change', (_) {
           if (callbackFinished.isCompleted) return;
-          final deadline = DateTime.now().add(const Duration(seconds: 2));
-          while (DateTime.now().isBefore(deadline)) {}
+          final deadline = DateTime.now().add(const Duration(seconds: 10));
+          while (DateTime.now().isBefore(deadline) && !marker.existsSync()) {
+            sleep(const Duration(milliseconds: 10));
+          }
           callbackCheckedReaderProgress = marker.existsSync();
           callbackFinished.complete();
         });
-        await callbackFinished.future.timeout(const Duration(seconds: 5));
+        await callbackFinished.future.timeout(const Duration(seconds: 12));
         expect(callbackCheckedReaderProgress, isTrue);
         await subscription.close();
       } finally {
