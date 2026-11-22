@@ -393,6 +393,8 @@ jobs:
         with:
           name: grafikr-runtime-aarch64-apple-darwin
           path: target/runtime/releases/aarch64-apple-darwin
+      - name: Restore Unix host executable permissions
+        run: rtk proxy chmod +x target/runtime/releases/*/bin/grafikr-host
       - name: Build the complete package matrix
         run: rtk proxy python -m scripts.package_bindings --version 1.1.0 --runtime-root target/runtime/releases --out target/packages/release
       - uses: actions/upload-artifact@v4
