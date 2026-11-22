@@ -407,7 +407,7 @@ jobs:
       - name: Verify package hashes and target coverage
         run: rtk proxy python -m scripts.package_bindings --version 1.1.0 --runtime-root target/runtime/releases --out target/packages/release --check
       - name: Install Ruby and PHP packages into clean consumers
-        run: rtk proxy python -m scripts.verify_ruby_php_packages --package-root target/packages/release
+        run: rtk proxy xvfb-run -a python -m scripts.verify_ruby_php_packages --package-root target/packages/release
       - name: Install X11 input automation
         run: rtk sudo apt-get update && rtk sudo apt-get install --yes xdotool xclip
       - name: Build clean installed C and C++ consumers and run GUI scenarios
