@@ -299,7 +299,7 @@ class BindingRunnerTests(unittest.TestCase):
         self.matrix(
             {
                 "cwd": ".",
-                "checks": [{"name": "slow", "argv": [sys.executable, "-c", "import sys,time; print('partial stdout', flush=True); print('partial stderr', file=sys.stderr, flush=True); time.sleep(1)"], "timeout_seconds": 0.02}],
+                "checks": [{"name": "slow", "argv": [sys.executable, "-c", "import sys,time; print('partial stdout', flush=True); print('partial stderr', file=sys.stderr, flush=True); time.sleep(1)"], "timeout_seconds": 0.25}],
                 "helper_paths": ["helper.py"],
             }
         )
