@@ -940,6 +940,8 @@ def main(argv: list[str] | None = None) -> int:
         f"package index written: {len(index['packages'])} artifacts, "
         f"{len(index['pending'])} pending; complete={index['complete']}"
     )
+    for package in index["pending"]:
+        print(f"pending: {package['sdk']}/{package['target']}: {package['reason']}")
     return 0 if index["complete"] else 1
 
 

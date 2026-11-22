@@ -395,6 +395,13 @@ jobs:
           path: target/runtime/releases/aarch64-apple-darwin
       - name: Build the complete package matrix
         run: rtk proxy python -m scripts.package_bindings --version 1.1.0 --runtime-root target/runtime/releases --out target/packages/release
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: grafikr-package-index-diagnostic
+          path: target/packages/release/package-index.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Verify package hashes and target coverage
         run: rtk proxy python -m scripts.package_bindings --version 1.1.0 --runtime-root target/runtime/releases --out target/packages/release --check
       - name: Install Ruby and PHP packages into clean consumers
