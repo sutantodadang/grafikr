@@ -303,6 +303,9 @@ jobs:
   package-matrix:
     needs: native-bundle
     runs-on: ubuntu-22.04
+    env:
+      WGPU_BACKEND: vulkan
+      WINIT_UNIX_BACKEND: x11
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -349,7 +352,13 @@ jobs:
         run: |
           rtk proxy sudo apt-get update
           rtk proxy sudo apt-get install -y libxkbcommon-x11-0 libwayland-client0 libx11-6 \
-            libxi6 libxcursor1 libxrandr2 libxinerama1 libfontconfig1 libssl-dev xvfb
+            libxi6 libxcursor1 libxrandr2 libxinerama1 libfontconfig1 libssl-dev \
+            mesa-vulkan-drivers xvfb
+      - name: Prepare Linux GUI runtime
+        run: |
+          rtk proxy mkdir -p /tmp/grafikr-runtime
+          rtk proxy chmod 700 /tmp/grafikr-runtime
+          rtk proxy python -c 'import os; open(os.environ["GITHUB_ENV"],"a",encoding="utf-8").write("XDG_RUNTIME_DIR=/tmp/grafikr-runtime"+chr(10)+"WAYLAND_DISPLAY="+chr(10))'
       - name: Install Lua SDK modules for installed consumers
         env:
           GRAFIKR_LUA54: lua
