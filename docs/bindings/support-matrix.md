@@ -1,7 +1,7 @@
 # Cross-language support evidence
 
-Snapshot: 2026-11-22. This is implementation evidence, not a release support
-promise. No package registry has been published.
+Snapshot: 2026-11-22. This is implementation evidence, not a release support promise.
+No package registry has been published.
 
 ## Contract and unit checks
 

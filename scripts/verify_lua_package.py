@@ -181,6 +181,10 @@ def verify(
     fixture_host = fixture_host or Path(os.environ.get("GRAFIKR_FIXTURE_HOST", ""))
     lua_executable = lua_executable or Path(os.environ.get("GRAFIKR_LUA54", ""))
     modules_root = modules_root or Path(os.environ.get("GRAFIKR_LUA54_MODULES", ""))
+    if not lua_executable.is_absolute() and not lua_executable.is_file():
+        resolved_lua = shutil.which(str(lua_executable))
+        if resolved_lua:
+            lua_executable = Path(resolved_lua)
     package_root, fixture_host, lua_executable, modules_root = map(
         Path, (package_root.resolve(), fixture_host.resolve(), lua_executable.resolve(), modules_root.resolve())
     )
