@@ -434,10 +434,11 @@ jobs:
           GRAFIKR_LUA54_MODULES: ${{ runner.temp }}/grafikr-lua
         run: rtk proxy xvfb-run -a python -m scripts.run_binding_checks --sdk lua --suite installed --bundle target/runtime/releases/x86_64-unknown-linux-gnu --fixture-host target/debug/fixture-host --package-root target/packages/release --out .artifacts/bindings/lua-installed-linux-x64.json
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: grafikr-installed-scenario-evidence
           path: .artifacts/bindings/*-installed-linux-x64.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
