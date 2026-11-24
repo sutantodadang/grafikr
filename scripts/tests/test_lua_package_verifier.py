@@ -6,10 +6,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.verify_lua_package import _indexed_artifact, verify
+from scripts.verify_lua_package import _indexed_artifact, _lua_native_extension, verify
 
 
 class LuaPackageVerifierTests(unittest.TestCase):
+    def test_lua_native_module_extension_is_platform_specific(self):
+        self.assertEqual(_lua_native_extension("nt"), ".dll")
+        self.assertEqual(_lua_native_extension("posix"), ".so")
+
     def test_lua_command_name_resolves_through_path(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -103,6 +107,8 @@ class LuaPackageVerifierTests(unittest.TestCase):
 
             self.assertEqual(lua_environment["LUA_PATH"].count(";"), 6)
             self.assertEqual(lua_environment["LUA_CPATH"].count(";"), 4)
+            extension = _lua_native_extension(os.name)
+            self.assertIn(f"?{extension}", lua_environment["LUA_CPATH"])
 
     def test_indexed_source_rock_must_match_checksum(self):
         with tempfile.TemporaryDirectory() as temporary:

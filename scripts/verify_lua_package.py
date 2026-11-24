@@ -153,6 +153,10 @@ print("installed Lua counter/form, dashboard, and multi-window passed")
 '''
 
 
+def _lua_native_extension(os_name: str) -> str:
+    return ".dll" if os_name == "nt" else ".so"
+
+
 def _indexed_artifact(package_root: Path) -> Path:
     index_path = package_root / "package-index.json"
     index = json.loads(index_path.read_text(encoding="utf-8"))
@@ -205,6 +209,7 @@ def verify(
             raise RuntimeError(f"LuaRocks did not install the SDK into the isolated tree: {install}")
         dep_share = modules_root / "share" / "lua" / "5.4"
         dep_lib = modules_root / "lib" / "lua" / "5.4"
+        native_extension = _lua_native_extension(os.name)
         environment = os.environ.copy()
         environment.update({
             "LUA": str(lua_executable),
@@ -213,7 +218,7 @@ def verify(
             "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
             "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1",
             "LUA_PATH": ";".join((str(install_share / "?.lua"), str(install_share / "?/init.lua"), str(dep_share / "?.lua"), str(dep_share / "?/init.lua"), ";;")),
-            "LUA_CPATH": ";".join((str(install_lib / "?.dll"), str(dep_lib / "?.dll"), ";;")),
+            "LUA_CPATH": ";".join((str(install_lib / f"?{native_extension}"), str(dep_lib / f"?{native_extension}"), ";;")),
             "PATH": os.pathsep.join((str(lua_executable.parent), str(dep_lib), environment.get("PATH", ""))),
         })
         scenario = root / "installed_scenarios.lua"
