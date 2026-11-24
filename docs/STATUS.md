@@ -1,8 +1,9 @@
 # Implementation Status
 
-Last updated: November 22, 2026. Version 1.1.0. Tested on Windows 11 with a GPU
-through D3D12. Wayland/X11/macOS and other GPU vendors have not been verified on
-real hardware.
+Last updated: November 24, 2026. Version 1.1.0. The Rust UI has been exercised
+on Windows 11 with a GPU through D3D12. The cross-language package workflow also
+passes Linux X11 scenarios under Xvfb; native desktop input, Wayland, and the
+multi-vendor physical GPU matrix remain unverified.
 
 ## Phase summary
 
@@ -16,16 +17,15 @@ real hardware.
 | M5 — Alpha/optimization | done* | multi-window, animation scheduler + Transition, glyph/image caches, shadow, batching, benchmarks, `UiStats`/`RendererStats`; RSS profiling still missing |
 | M6 — Cross-platform beta | partial | grid, ComboBox, 50k DataGrid, TreeView, and golden images exist; Wayland/X11/macOS and the GPU matrix are untested |
 | M7 — Toward 1.0 | partial | 1.0 API, SemVer, license, packaging metadata, tutorial, migration guide, CI benchmark, device-loss recovery; crates.io publication and hardware verification still missing |
-| M8 — Cross-language SDKs | partial | shared bridge, C ABI, IPC host, and all twelve SDK source groups exist; full target packages, installed GUI matrix, and hardware/accessibility evidence remain open |
+| M8 — Cross-language SDKs | partial | shared bridge, C ABI, IPC host, twelve SDK groups, and all six target package bundles pass CI; 336 installed desktop scenarios and hardware/accessibility evidence remain open |
 
-The cross-language checkpoint passed six native runtime target jobs and SDK
-unit/contract checks in CI run `44900304839`. Its Linux package-matrix job
-failed with 53 artifacts and 16 pending targets. A local package candidate
-now verifies 88 artifacts for all six runtime targets with zero pending
-entries; the matching Linux CI rerun is still in progress. The full GUI matrix
-(336 scenarios), eight hardware/accessibility cells, and eight native-versus-IPC
-benchmark cells remain unverified. Swift's Windows toolchain cannot find
-`stdlib.h`. See [`bindings/support-matrix.md`](bindings/support-matrix.md) for
+The latest cross-language workflow, run `45312336399` on commit `bf3af3a`, passed
+all six native runtime target jobs and the Linux package matrix. Its index
+contains 88 artifacts for all six runtime targets, with no pending entries and
+`source_dirty=false`. Clean package consumers and the installed Lua source-rock
+scenarios passed. The full GUI matrix (336 scenarios), eight
+hardware/accessibility cells, and eight native-versus-IPC benchmark cells remain
+unverified. See [`bindings/support-matrix.md`](bindings/support-matrix.md) for
 the evidence boundary and remaining gates. No SDK package has been published.
 
 `*` means the core feature is complete, with the gaps recorded below.
