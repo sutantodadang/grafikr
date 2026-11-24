@@ -57,6 +57,53 @@ class LuaPackageVerifierTests(unittest.TestCase):
             self.assertEqual(len(commands), 2)
             self.assertEqual(commands[1][0][0], str(executable.resolve()))
 
+    def test_lua_module_search_paths_use_lua_separator_on_posix(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            executable = root / ("lua.exe" if os.name == "nt" else "lua")
+            executable.write_text("", encoding="utf-8")
+            luarocks = root / ("luarocks.exe" if os.name == "nt" else "luarocks")
+            luarocks.write_text("", encoding="utf-8")
+            modules = root / "modules"
+            modules.mkdir()
+            fixture_host = root / ("fixture-host.exe" if os.name == "nt" else "fixture-host")
+            fixture_host.write_text("", encoding="utf-8")
+            rock = root / "grafikr-1.1.0-1.src.rock"
+            rock.write_bytes(b"rock")
+            (root / "package-index.json").write_text(json.dumps({
+                "format": "grafikr-bindings-package-index-v1",
+                "packages": [{
+                    "sdk": "lua", "target": "source", "path": rock.name,
+                    "sha256": hashlib.sha256(rock.read_bytes()).hexdigest(),
+                }],
+            }), encoding="utf-8")
+            lua_environment = {}
+
+            def fake_tool(*argv, cwd=None):
+                if argv[0] == str(luarocks):
+                    tree = Path(argv[argv.index("--tree") + 1])
+                    sdk_directory = tree / "share" / "lua" / "5.4"
+                    sdk_directory.mkdir(parents=True)
+                    (sdk_directory / "grafikr.lua").write_text("return {}", encoding="utf-8")
+                else:
+                    lua_environment.update({
+                        "LUA_PATH": os.environ["LUA_PATH"],
+                        "LUA_CPATH": os.environ["LUA_CPATH"],
+                    })
+
+            with patch.dict(os.environ, {
+                "PATH": str(root),
+                "GRAFIKR_LUA54": str(executable),
+                "GRAFIKR_LUA54_MODULES": str(modules),
+                "GRAFIKR_FIXTURE_HOST": str(fixture_host),
+            }), patch("scripts.verify_lua_package.os.pathsep", ":"), patch(
+                "scripts.verify_lua_package._tool", side_effect=fake_tool
+            ):
+                verify(root)
+
+            self.assertEqual(lua_environment["LUA_PATH"].count(";"), 6)
+            self.assertEqual(lua_environment["LUA_CPATH"].count(";"), 4)
+
     def test_indexed_source_rock_must_match_checksum(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

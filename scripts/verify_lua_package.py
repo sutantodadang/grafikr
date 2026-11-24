@@ -212,8 +212,8 @@ def verify(
             "GRAFIKR_EXPECTED_LUA_ROOT": str(install_share),
             "GRAFIKR_FIXTURE_EARLY_SUBSCRIBE": "1",
             "GRAFIKR_FIXTURE_COLLECTION_REQUEST": "1",
-            "LUA_PATH": os.pathsep.join((str(install_share / "?.lua"), str(install_share / "?/init.lua"), str(dep_share / "?.lua"), str(dep_share / "?/init.lua"), ";;")),
-            "LUA_CPATH": os.pathsep.join((str(install_lib / "?.dll"), str(dep_lib / "?.dll"), ";;")),
+            "LUA_PATH": ";".join((str(install_share / "?.lua"), str(install_share / "?/init.lua"), str(dep_share / "?.lua"), str(dep_share / "?/init.lua"), ";;")),
+            "LUA_CPATH": ";".join((str(install_lib / "?.dll"), str(dep_lib / "?.dll"), ";;")),
             "PATH": os.pathsep.join((str(lua_executable.parent), str(dep_lib), environment.get("PATH", ""))),
         })
         scenario = root / "installed_scenarios.lua"
