@@ -28,6 +28,24 @@ Linux x64 was built on Ubuntu 22.04/glibc 2.35 under Xvfb/Openbox/lavapipe;
 this does not establish Wayland, physical GPU, or desktop accessibility
 behavior.
 
+## Native desktop evidence collected locally
+
+On a Windows x64 interactive desktop (build 26200), the C and C++ installed
+scenario harnesses were run against the checksummed Windows runtime bundle from
+run `45312336399`, with `WGPU_BACKEND=dx12` and real `SendInput` mouse/keyboard
+events. The local evidence directory is
+`.artifacts/bindings/windows-x64-local`; its records identify source SHA
+`f7ed524` separately from runtime build SHA `bf3af3a`.
+
+The C and C++ dashboard scenarios passed, including the 50,000-row range,
+selection, canvas/image, and cleanup checks. Their counter/form and multi-window
+records remain `UNVERIFIED`: IME/focus preservation and modal focus trapping
+were not exercised. This leaves 334 of 336 GUI scenario cells incomplete. The
+local machine reports an NVIDIA RTX 4070 SUPER, but the run did not capture a
+verified adapter/accessibility report, so all eight hardware/accessibility
+cells remain open. No native-versus-IPC workload benchmark evidence was
+collected; all eight benchmark cells remain open.
+
 A fresh Windows x64 development-fixture bundle was built at
 `target/runtime/continuation-current-windows-x64`. Its manifest verifies as
 `x86_64-pc-windows-msvc`, and the bundled host reports engine 1.1.0/protocol
@@ -43,12 +61,11 @@ passed under Xvfb/X11. The six native target jobs also passed their target-local
 SDK and package consumer checks. These are build and installed-consumer results,
 not registry publication or native desktop support evidence.
 
-The full evidence gate still has no accepted desktop GUI, physical
-hardware/accessibility, or native-versus-IPC benchmark records. A local full
-audit reports 935 evidence records (609 pass, 326 fail) and explicitly lists
-336 missing GUI scenarios, eight hardware/accessibility cells, and eight
-native-versus-IPC benchmark cells. Headless installed SDK scenarios and Xvfb
-input tests do not count as native desktop GUI evidence.
+The full evidence gate still has no complete desktop display cell and no
+physical hardware/accessibility or native-versus-IPC benchmark records. The
+local Windows run contributes two passing dashboard scenarios; it does not
+make the Windows x64 display cell complete. Headless installed SDK scenarios
+and Xvfb input tests do not count as native desktop GUI evidence.
 
 ## Open release gates
 
@@ -63,9 +80,10 @@ input tests do not count as native desktop GUI evidence.
 - Eight hardware/accessibility cells and eight native-versus-IPC benchmark
   cells remain missing. Linux Wayland and physical GPU/accessibility behavior
   are unverified.
-- No native desktop display cell has been accepted yet. In particular, Xvfb and
-  software Vulkan do not establish physical GPU, Wayland, or accessibility
-  behavior.
+- Windows x64 has two locally passing dashboard scenarios and four unverified
+  counter/multi-window scenarios across C and C++. No display cell is complete.
+- Xvfb and software Vulkan do not establish physical GPU, Wayland, or
+  accessibility behavior.
 
 Until those gates pass, label this work as an implementation checkpoint. Do not
 claim complete cross-language platform support or public package availability.
