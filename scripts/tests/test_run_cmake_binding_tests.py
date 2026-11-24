@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from scripts.run_cmake_binding_tests import _validate_native_parity
+from scripts.run_cmake_binding_tests import _validate_native_parity, _write_gui_evidence
 
 
 def parity_output() -> str:
@@ -54,6 +54,58 @@ class NativeParityTests(unittest.TestCase):
             _validate_native_parity(output, fixture)
             with self.assertRaisesRegex(ValueError, "wrong state value"):
                 _validate_native_parity(output.replace('"value":1.0}', '"value":2.0}'), fixture)
+
+
+class NativeGuiEvidenceTests(unittest.TestCase):
+    def test_dashboard_record_includes_hashed_screenshot_and_state(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            attachments = root / "attachments"
+            attachments.mkdir()
+            screenshot = attachments / "cpp-dashboard.bmp"
+            screenshot.write_bytes(b"test screenshot bytes")
+            executable = root / "cpp-installed-scenarios.exe"
+            executable.write_bytes(b"consumer executable")
+            manifest = {
+                "target": "x86_64-pc-windows-msvc",
+                "engine_version": "1.1.0",
+                "protocol": {"major": 1, "minor": 0},
+                "build_sha": "a" * 40,
+            }
+            _write_gui_evidence(
+                root, "cpp", "dashboard", executable, manifest,
+                ["dashboard.initial-range", "dashboard.selection", "dashboard.scroll-range"],
+                screenshot, "2026-11-24T00:00:00+00:00",
+            )
+            record = json.loads((root / "gui-cpp-dashboard.json").read_text(encoding="utf-8"))
+            self.assertEqual(record["status"], "PASS")
+            self.assertEqual(record["input_method"], "windows_sendinput")
+            self.assertEqual({attachment["kind"] for attachment in record["attachments"]}, {"screenshot", "client_state"})
+            self.assertEqual(record["runtime_build_sha"], "a" * 40)
+
+    def test_counter_record_remains_unverified_without_ime_and_focus_checks(self) -> None:
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            attachments = root / "attachments"
+            attachments.mkdir()
+            screenshot = attachments / "c-counter.bmp"
+            screenshot.write_bytes(b"test screenshot bytes")
+            executable = root / "c-installed-scenarios.exe"
+            executable.write_bytes(b"consumer executable")
+            manifest = {
+                "target": "x86_64-pc-windows-msvc",
+                "engine_version": "1.1.0",
+                "protocol": {"major": 1, "minor": 0},
+                "build_sha": "b" * 40,
+            }
+            _write_gui_evidence(
+                root, "c", "counter", executable, manifest,
+                ["counter.click-state-update", "counter.unicode-binding"],
+                screenshot, "2026-11-24T00:00:00+00:00",
+            )
+            record = json.loads((root / "gui-c-counter_form.json").read_text(encoding="utf-8"))
+            self.assertEqual(record["status"], "UNVERIFIED")
+            self.assertIn("IME composition", record["reason"])
 
 
 if __name__ == "__main__":

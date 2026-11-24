@@ -4,15 +4,23 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import json
 import os
+import platform
 import shutil
+import socket
 import subprocess
 import tempfile
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
-from scripts.build_runtime import ROOT, validate_manifest
+from scripts.build_runtime import ROOT, _git_sha, validate_manifest
+from scripts.runtime_evidence import validate_evidence
+from scripts.windows_gui import (
+    _capture_windows_window, _wait_for_windows_window, _windows_click, _windows_key, _windows_paste_text,
+)
 
 
 def run(
@@ -22,6 +30,7 @@ def run(
     native_contract: Path | None = None,
     native_widget_inventory: bool = False,
     installed_scenarios: bool = False,
+    evidence_dir: Path | None = None,
 ) -> None:
     if project not in {"c", "cpp"}:
         raise ValueError("project must be c or cpp")
@@ -32,7 +41,10 @@ def run(
     target.mkdir(exist_ok=True)
     if installed_consumer_only:
         if installed_scenarios:
-            _verify_bundle_cmake_package(runtime, target, project, run_scenarios=True)
+            _verify_bundle_cmake_package(
+                runtime, target, project, run_scenarios=True,
+                evidence_dir=evidence_dir, manifest=manifest,
+            )
         else:
             _verify_bundle_cmake_package(runtime, target)
         return
@@ -275,7 +287,14 @@ def _run_native_collection_provider_scenario(build: Path, project: str) -> None:
         )
 
 
-def _verify_bundle_cmake_package(runtime: Path, target: Path, project: str = "c", run_scenarios: bool = False) -> None:
+def _verify_bundle_cmake_package(
+    runtime: Path,
+    target: Path,
+    project: str = "c",
+    run_scenarios: bool = False,
+    evidence_dir: Path | None = None,
+    manifest: dict | None = None,
+) -> None:
     """Compile and run clean C/C++ consumers through the installed package config."""
     suffix = ".exe" if os.name == "nt" else ""
     examples = (
@@ -348,19 +367,31 @@ def _verify_bundle_cmake_package(runtime: Path, target: Path, project: str = "c"
                     f"{(result.stdout + result.stderr)[-5000:]}"
                 )
         if run_scenarios:
-            for native_project in ("c", "cpp"):
-                _run_installed_cmake_scenarios(build, native_project)
+            if evidence_dir is not None and manifest is None:
+                raise ValueError("GUI evidence requires the validated runtime manifest")
+            _run_installed_cmake_scenarios(build, project, evidence_dir, manifest)
 
 
-def _run_installed_cmake_scenarios(build: Path, project: str) -> None:
-    if os.name == "nt" or not os.environ.get("DISPLAY"):
+def _run_installed_cmake_scenarios(
+    build: Path,
+    project: str,
+    evidence_dir: Path | None = None,
+    manifest: dict | None = None,
+) -> None:
+    windows_native = os.name == "nt"
+    if not windows_native and not os.environ.get("DISPLAY"):
         raise RuntimeError("installed C/C++ GUI scenarios require an X11 display")
-    for tool in ("xdotool", "xclip"):
-        if shutil.which(tool) is None:
-            raise RuntimeError(f"installed C/C++ GUI scenarios require {tool}")
-    executable = build / f"{project}-installed-scenarios"
-    if not executable.is_file():
-        raise FileNotFoundError(f"installed scenario executable is missing: {executable}")
+    if not windows_native:
+        for tool in ("xdotool", "xclip"):
+            if shutil.which(tool) is None:
+                raise RuntimeError(f"installed C/C++ GUI scenarios require {tool}")
+    executable_name = f"{project}-installed-scenarios" + (".exe" if windows_native else "")
+    executable = next(
+        (candidate for candidate in (build / "Release" / executable_name, build / executable_name) if candidate.is_file()),
+        None,
+    )
+    if executable is None:
+        raise FileNotFoundError(f"installed scenario executable is missing under {build}")
 
     for mode, title, expected in (
         ("counter", "Grafikr installed counter", {"counter.click-state-update", "counter.unicode-binding"}),
@@ -368,11 +399,15 @@ def _run_installed_cmake_scenarios(build: Path, project: str) -> None:
         ("multi", "Grafikr second window", {"multi-window-state-survives-first-close", "multi-window.keyboard-binding", "multi-window.modal-escape", "multi-window-modal-close"}),
     ):
         with tempfile.TemporaryDirectory(prefix="grafikr-installed-scenario-") as temporary:
+            started_at = datetime.now(timezone.utc).isoformat()
             report_path = Path(temporary) / "events.txt"
             environment = os.environ.copy()
             environment["GRAFIKR_SCENARIO_REPORT"] = str(report_path)
             environment["WINIT_UNIX_BACKEND"] = "x11"
             environment.pop("WAYLAND_DISPLAY", None)
+            if windows_native:
+                environment["WGPU_BACKEND"] = "dx12"
+            screenshot_path: Path | None = None
             process = subprocess.Popen(
                 [str(executable), mode], cwd=ROOT, env=environment,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
@@ -381,26 +416,63 @@ def _run_installed_cmake_scenarios(build: Path, project: str) -> None:
             try:
                 ready_marker = "multi-window.ready" if mode == "multi" else f"{mode}.ready"
                 _wait_for_scenario_marker(process, report_path, ready_marker, 20)
+                if windows_native:
+                    window = _wait_for_windows_window(process, title, 10)
+                    screenshot_dir = os.environ.get("GRAFIKR_SCENARIO_SCREENSHOT_DIR")
+                    if screenshot_dir:
+                        destination = Path(screenshot_dir).resolve()
+                        destination.mkdir(parents=True, exist_ok=True)
+                        _capture_windows_window(window, destination / f"{project}-{mode}.bmp")
+                    if evidence_dir is not None:
+                        if manifest is None:
+                            raise ValueError("GUI evidence requires a validated runtime manifest")
+                        destination = evidence_dir.absolute() / "attachments"
+                        destination.mkdir(parents=True, exist_ok=True)
+                        screenshot_path = destination / f"{project}-{mode}.bmp"
+                        if screenshot_path.exists():
+                            raise FileExistsError(f"refusing to overwrite GUI screenshot {screenshot_path}")
+                        _capture_windows_window(window, screenshot_path)
                 if mode == "dashboard":
                     _wait_for_scenario_marker(process, report_path, "dashboard.initial-range", 10)
-                    window = _wait_for_x11_window(process, title, 10)
-                    subprocess.run(["xdotool", "windowfocus", "--sync", window], check=True, timeout=5)
-                    subprocess.run(["xdotool", "mousemove", "100", "150", "click", "1", "key", "End"], check=True, timeout=5)
+                    if windows_native:
+                        _windows_click(window, 100, 150)
+                        _windows_key(0x23)  # VK_END
+                    else:
+                        window = _wait_for_x11_window(process, title, 10)
+                        subprocess.run(["xdotool", "windowfocus", "--sync", window], check=True, timeout=5)
+                        subprocess.run(["xdotool", "mousemove", "100", "150", "click", "1", "key", "End"], check=True, timeout=5)
                     _wait_for_scenario_marker(process, report_path, "dashboard.selection", 5)
                     _wait_for_scenario_marker(process, report_path, "dashboard.scroll-range", 15)
                 else:
-                    window = _wait_for_x11_window(process, title, 10)
-                    subprocess.run(["xdotool", "windowfocus", "--sync", window], check=True, timeout=5)
+                    if not windows_native:
+                        window = _wait_for_x11_window(process, title, 10)
+                        subprocess.run(["xdotool", "windowfocus", "--sync", window], check=True, timeout=5)
                     if mode == "counter":
-                        subprocess.run(["xdotool", "mousemove", "50", "42", "click", "1"], check=True, timeout=5)
+                        if windows_native:
+                            _windows_click(window, 50, 42)
+                        else:
+                            subprocess.run(["xdotool", "mousemove", "50", "42", "click", "1"], check=True, timeout=5)
                         _wait_for_scenario_marker(process, report_path, "counter.click-state-update", 5)
-                        _paste_text("Input 雪")
-                        subprocess.run(["xdotool", "mousemove", "120", "82", "click", "1", "key", "ctrl+a", "key", "ctrl+v"], check=True, timeout=5)
+                        if windows_native:
+                            _windows_click(window, 120, 65)
+                            time.sleep(0.2)
+                            _windows_paste_text("Input 雪")
+                        else:
+                            _paste_text("Input 雪")
+                            subprocess.run(["xdotool", "mousemove", "120", "82", "click", "1", "key", "ctrl+a", "key", "ctrl+v"], check=True, timeout=5)
                     else:
-                        _paste_text("Confirm 雪")
-                        subprocess.run(["xdotool", "mousemove", "150", "160", "click", "1", "key", "Tab", "key", "ctrl+a", "key", "ctrl+v"], check=True, timeout=5)
+                        if windows_native:
+                            _windows_click(window, 150, 160)
+                            _windows_key(0x09)  # VK_TAB
+                            _windows_paste_text("Confirm 雪")
+                        else:
+                            _paste_text("Confirm 雪")
+                            subprocess.run(["xdotool", "mousemove", "150", "160", "click", "1", "key", "Tab", "key", "ctrl+a", "key", "ctrl+v"], check=True, timeout=5)
                         _wait_for_scenario_marker(process, report_path, "multi-window.keyboard-binding", 5)
-                        subprocess.run(["xdotool", "key", "Escape"], check=True, timeout=5)
+                        if windows_native:
+                            _windows_key(0x1B)  # VK_ESCAPE
+                        else:
+                            subprocess.run(["xdotool", "key", "Escape"], check=True, timeout=5)
                         _wait_for_scenario_marker(process, report_path, "multi-window.modal-escape", 5)
                 _wait_for_process(process, 30)
                 markers = set(report_path.read_text(encoding="utf-8").splitlines()) if report_path.exists() else set()
@@ -426,6 +498,105 @@ def _run_installed_cmake_scenarios(build: Path, project: str) -> None:
                 failure = exit_error if failure is None else RuntimeError(f"{failure}; {exit_error}")
             if failure is not None:
                 raise RuntimeError(f"{project} installed {mode}: {failure}; markers={sorted(markers)}") from failure
+            if evidence_dir is not None:
+                if manifest is None or screenshot_path is None or process.returncode != 0:
+                    raise RuntimeError("cannot emit GUI evidence without a validated bundle, screenshot, and clean scenario exit")
+                _write_gui_evidence(
+                    evidence_dir.absolute(), project, mode, executable, manifest,
+                    sorted(markers), screenshot_path, started_at,
+                )
+
+
+def _write_gui_evidence(
+    evidence_root: Path,
+    project: str,
+    mode: str,
+    executable: Path,
+    manifest: dict,
+    markers: list[str],
+    screenshot_path: Path,
+    started_at: str,
+) -> None:
+    scenario = {"counter": "counter_form", "dashboard": "dashboard", "multi": "multi_window"}[mode]
+    display_cell = {"x86_64-pc-windows-msvc": "win-x64-d3d12"}.get(manifest["target"])
+    if display_cell is None:
+        raise ValueError(f"no native GUI evidence cell is defined for {manifest['target']}")
+    if screenshot_path.is_symlink() or not screenshot_path.is_file():
+        raise ValueError("GUI evidence screenshot must be a regular file")
+
+    notes = {
+        "counter_form": "The current scenario verifies OS click, Unicode input and state binding, but does not verify IME composition or focus preservation after unrelated label updates.",
+        "dashboard": None,
+        "multi_window": "The current scenario verifies the remaining window, keyboard input and modal Escape, but does not verify that focus remains trapped inside the modal.",
+    }
+    reason = notes[scenario]
+    state_path = evidence_root / "attachments" / f"{project}-{mode}-state.json"
+    if state_path.exists():
+        raise FileExistsError(f"refusing to overwrite GUI state report {state_path}")
+    state_path.write_text(
+        json.dumps(
+            {
+                "sdk": project,
+                "scenario": scenario,
+                "target": manifest["target"],
+                "display_cell": display_cell,
+                "input_method": "windows_sendinput",
+                "markers": markers,
+                "exit_code": 0,
+                "scenario_limit": reason,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    relative_screenshot = screenshot_path.relative_to(evidence_root).as_posix()
+    relative_state = state_path.relative_to(evidence_root).as_posix()
+    evidence = {
+        "stage": "gui",
+        "scenario": scenario,
+        "display_cell": display_cell,
+        "input_method": "windows_sendinput",
+        "sdk": project,
+        "consumer_language": project,
+        "engine_version": manifest["engine_version"],
+        "sdk_version": manifest["engine_version"],
+        "protocol_version": manifest["protocol"],
+        "runtime_version": manifest["engine_version"],
+        "target": manifest["target"],
+        "backend": "D3D12",
+        "gpu_kind": None,
+        "gpu_vendor": None,
+        "source_sha": _git_sha(),
+        "runtime_build_sha": manifest["build_sha"],
+        "runner_sha": hashlib.sha256(
+            f"{platform.platform()}|{platform.machine()}|{socket.gethostname()}".encode("utf-8")
+        ).hexdigest(),
+        "artifact_sha256": _sha256(executable),
+        "command": [{"name": executable.name, "argv": [str(executable), mode]}],
+        "exit_code": 0,
+        "status": "UNVERIFIED" if reason else "PASS",
+        "started_at": started_at,
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+        "attachments": [
+            {"path": relative_screenshot, "sha256": _sha256(screenshot_path), "kind": "screenshot"},
+            {"path": relative_state, "sha256": _sha256(state_path), "kind": "client_state"},
+        ],
+        "reason": reason,
+    }
+    validate_evidence(evidence, evidence_root)
+    evidence_path = evidence_root / f"gui-{project}-{scenario}.json"
+    if evidence_path.exists():
+        raise FileExistsError(f"refusing to overwrite GUI evidence {evidence_path}")
+    evidence_path.write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _wait_for_scenario_marker(process: subprocess.Popen, path: Path, marker: str, timeout: float) -> None:
@@ -463,17 +634,27 @@ def _paste_text(value: str) -> None:
     subprocess.run(["xclip", "-selection", "clipboard"], input=value, text=True, check=True, timeout=5)
 
 
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", required=True, choices=("c", "cpp"))
     parser.add_argument("--runtime", type=Path, required=True)
     parser.add_argument("--installed-consumer-only", action="store_true")
     parser.add_argument("--installed-scenarios", action="store_true")
+    parser.add_argument("--evidence-dir", type=Path, help="write screenshot, client-state, and schema-validated GUI records")
     parser.add_argument("--native-contract", type=Path)
     parser.add_argument("--native-widget-inventory", action="store_true")
     args = parser.parse_args(argv)
     try:
-        run(args.project, args.runtime.resolve(), args.installed_consumer_only, args.native_contract, args.native_widget_inventory, args.installed_scenarios)
+        run(
+            args.project,
+            args.runtime.resolve(),
+            args.installed_consumer_only,
+            args.native_contract,
+            args.native_widget_inventory,
+            args.installed_scenarios,
+            args.evidence_dir.absolute() if args.evidence_dir else None,
+        )
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as error:
         parser.exit(1, f"native binding tests failed: {error}\n")
     print(f"{args.project} CMake/CTest passed")
