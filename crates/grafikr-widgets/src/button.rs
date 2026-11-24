@@ -285,7 +285,41 @@ impl Widget for ButtonWidget {
         node.set_role(accesskit::Role::Button);
         node.set_label(self.label.get());
         node.add_action(accesskit::Action::Click);
+        node.add_action(accesskit::Action::Focus);
     }
 }
 
 into_views!(Button);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn accessibility_button_exposes_focus_and_click_actions() {
+        let mut widget = ButtonWidget {
+            label: Signal::new("Increment".to_owned()),
+            on_click: None,
+            cache: TextCache::default(),
+            pressed: false,
+            font_size: 16.0,
+            variant: Signal::new(ButtonVariant::Primary),
+            icon: Signal::new(false),
+            _subscriber: Rc::new(|| {}),
+            hover: Transition::new(0.0),
+        };
+        let mut node = accesskit::Node::new(accesskit::Role::Button);
+
+        Widget::accessibility(&mut widget, &mut node);
+
+        let description = format!("{node:?}");
+        assert!(
+            description.contains("Focus"),
+            "missing accessible focus action: {description}"
+        );
+        assert!(
+            description.contains("Click"),
+            "missing accessible click action: {description}"
+        );
+    }
+}

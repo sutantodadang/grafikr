@@ -137,7 +137,8 @@ impl Gpu {
         window: &Arc<Window>,
         proxy: &EventLoopProxy<LoopEvent>,
     ) -> Result<Self, Box<dyn Error>> {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
+        let instance =
+            wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
         let surface = instance.create_surface(window.clone())?;
         let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
@@ -145,6 +146,13 @@ impl Gpu {
             force_fallback_adapter: false,
             ..Default::default()
         }))?;
+        if std::env::var_os("GRAFIKR_RENDERER_INFO").is_some() {
+            let info = adapter.get_info();
+            eprintln!(
+                "grafikr-adapter-v1\tbackend={:?}\tdevice_type={:?}\tvendor={:04x}\tdevice={:04x}\tname={}",
+                info.backend, info.device_type, info.vendor, info.device, info.name,
+            );
+        }
         let (device, queue) =
             pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
                 label: Some("grafikr"),

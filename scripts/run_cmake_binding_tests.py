@@ -19,7 +19,8 @@ from pathlib import Path
 from scripts.build_runtime import ROOT, _git_sha, validate_manifest
 from scripts.runtime_evidence import validate_evidence
 from scripts.windows_gui import (
-    _capture_windows_window, _wait_for_windows_window, _windows_click, _windows_key, _windows_paste_text,
+    _capture_windows_accessibility, _capture_windows_window, _wait_for_windows_window,
+    _windows_click, _windows_key, _windows_paste_text,
 )
 
 
@@ -407,7 +408,11 @@ def _run_installed_cmake_scenarios(
             environment.pop("WAYLAND_DISPLAY", None)
             if windows_native:
                 environment["WGPU_BACKEND"] = "dx12"
+                if evidence_dir is not None:
+                    environment["GRAFIKR_RENDERER_INFO"] = "1"
             screenshot_path: Path | None = None
+            accessibility_report: dict | None = None
+            accessibility_error: str | None = None
             process = subprocess.Popen(
                 [str(executable), mode], cwd=ROOT, env=environment,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
@@ -432,6 +437,12 @@ def _run_installed_cmake_scenarios(
                         if screenshot_path.exists():
                             raise FileExistsError(f"refusing to overwrite GUI screenshot {screenshot_path}")
                         _capture_windows_window(window, screenshot_path)
+                        if mode == "counter":
+                            time.sleep(1.0)
+                            try:
+                                accessibility_report = _capture_windows_accessibility(window, title)
+                            except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
+                                accessibility_error = str(error)
                 if mode == "dashboard":
                     _wait_for_scenario_marker(process, report_path, "dashboard.initial-range", 10)
                     if windows_native:
@@ -503,7 +514,8 @@ def _run_installed_cmake_scenarios(
                     raise RuntimeError("cannot emit GUI evidence without a validated bundle, screenshot, and clean scenario exit")
                 _write_gui_evidence(
                     evidence_dir.absolute(), project, mode, executable, manifest,
-                    sorted(markers), screenshot_path, started_at,
+                    sorted(markers), screenshot_path, started_at, stderr,
+                    accessibility_report, accessibility_error,
                 )
 
 
@@ -516,6 +528,9 @@ def _write_gui_evidence(
     markers: list[str],
     screenshot_path: Path,
     started_at: str,
+    stderr: str = "",
+    accessibility_report: dict | None = None,
+    accessibility_error: str | None = None,
 ) -> None:
     scenario = {"counter": "counter_form", "dashboard": "dashboard", "multi": "multi_window"}[mode]
     display_cell = {"x86_64-pc-windows-msvc": "win-x64-d3d12"}.get(manifest["target"])
@@ -524,12 +539,22 @@ def _write_gui_evidence(
     if screenshot_path.is_symlink() or not screenshot_path.is_file():
         raise ValueError("GUI evidence screenshot must be a regular file")
 
+    adapter = _parse_adapter_report(stderr)
+    actual_backend = {
+        "Dx12": "D3D12",
+        "Vulkan": "Vulkan",
+        "Metal": "Metal",
+        "Gl": "OpenGL",
+    }.get(adapter.get("backend"), "unknown")
     notes = {
         "counter_form": "The current scenario verifies OS click, Unicode input and state binding, but does not verify IME composition or focus preservation after unrelated label updates.",
         "dashboard": None,
         "multi_window": "The current scenario verifies the remaining window, keyboard input and modal Escape, but does not verify that focus remains trapped inside the modal.",
     }
-    reason = notes[scenario]
+    reasons = [notes[scenario]] if notes[scenario] else []
+    if actual_backend != "D3D12":
+        reasons.append(f"runtime adapter backend was {actual_backend}, expected D3D12")
+    reason = "; ".join(reasons) or None
     state_path = evidence_root / "attachments" / f"{project}-{mode}-state.json"
     if state_path.exists():
         raise FileExistsError(f"refusing to overwrite GUI state report {state_path}")
@@ -542,6 +567,7 @@ def _write_gui_evidence(
                 "display_cell": display_cell,
                 "input_method": "windows_sendinput",
                 "markers": markers,
+                "runtime_adapter": adapter,
                 "exit_code": 0,
                 "scenario_limit": reason,
             },
@@ -564,7 +590,7 @@ def _write_gui_evidence(
         "protocol_version": manifest["protocol"],
         "runtime_version": manifest["engine_version"],
         "target": manifest["target"],
-        "backend": "D3D12",
+        "backend": actual_backend,
         "gpu_kind": None,
         "gpu_vendor": None,
         "source_sha": _git_sha(),
@@ -588,6 +614,158 @@ def _write_gui_evidence(
     evidence_path = evidence_root / f"gui-{project}-{scenario}.json"
     if evidence_path.exists():
         raise FileExistsError(f"refusing to overwrite GUI evidence {evidence_path}")
+    evidence_path.write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if mode == "counter" and project == "c" and (
+        accessibility_report is not None or accessibility_error is not None
+    ):
+        _write_windows_hardware_evidence(
+            evidence_root, project, executable, manifest, started_at, stderr,
+            accessibility_report, accessibility_error, markers,
+        )
+
+
+def _parse_adapter_report(stderr: str) -> dict[str, str]:
+    line = next(
+        (value for value in stderr.splitlines() if value.startswith("grafikr-adapter-v1\t")),
+        None,
+    )
+    if line is None:
+        return {}
+    report = {}
+    for field in line.split("\t")[1:]:
+        if "=" in field:
+            key, value = field.split("=", 1)
+            report[key] = value
+    return report
+
+
+def _write_windows_hardware_evidence(
+    evidence_root: Path,
+    project: str,
+    executable: Path,
+    manifest: dict,
+    started_at: str,
+    stderr: str,
+    accessibility_report: dict | None,
+    accessibility_error: str | None,
+    markers: list[str],
+) -> None:
+    display_cell = "win-x64-d3d12"
+    adapter = _parse_adapter_report(stderr)
+    try:
+        gpu_query = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name,driver_version", "--format=csv,noheader"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        gpu_query = None
+        gpu_error = str(error)
+    else:
+        gpu_error = None if gpu_query.returncode == 0 else gpu_query.stderr.strip()
+    gpu_text = gpu_query.stdout.strip() if gpu_query and gpu_query.returncode == 0 else ""
+    gpu_name = gpu_text.split(",", 1)[0].strip() if gpu_text else ""
+    hardware_verified = (
+        adapter.get("backend") == "Dx12"
+        and adapter.get("device_type") == "DiscreteGpu"
+        and adapter.get("vendor", "").lower() == "10de"
+        and "NVIDIA" in adapter.get("name", "")
+        and gpu_name
+        and adapter.get("name", "").casefold() == gpu_name.casefold()
+    )
+    controls = accessibility_report.get("controls", []) if accessibility_report else []
+    accessible_button = any(
+        item.get("control_type") == "ControlType.Button"
+        and item.get("name") == "Increment"
+        and item.get("keyboard_focusable") is True
+        for item in controls
+    )
+    accessible_field = any(
+        item.get("control_type") == "ControlType.Edit"
+        and (item.get("value") == "Grafikr 雪" or item.get("name") == "Grafikr 雪")
+        and item.get("keyboard_focusable") is True
+        for item in controls
+    )
+    keyboard_verified = "counter.unicode-binding" in markers
+    reasons = []
+    if not hardware_verified:
+        reasons.append("the application adapter could not be matched to a physical NVIDIA D3D12 adapter")
+    if not accessible_button:
+        reasons.append("UI Automation did not expose a keyboard-focusable Increment button by name")
+    if not accessible_field:
+        reasons.append("UI Automation did not expose the initial text field value and keyboard focus")
+    if not keyboard_verified:
+        reasons.append("the native keyboard scenario did not produce its Unicode binding marker")
+    if accessibility_error:
+        reasons.append(f"UI Automation query failed: {accessibility_error}")
+
+    gpu_path = evidence_root / "attachments" / "windows-x64-gpu-report.json"
+    accessibility_path = evidence_root / "attachments" / "windows-x64-accessibility-report.json"
+    if gpu_path.exists() or accessibility_path.exists():
+        raise FileExistsError("refusing to overwrite Windows hardware evidence attachments")
+    gpu_path.write_text(
+        json.dumps(
+            {
+                "display_cell": display_cell,
+                "expected_backend": "D3D12",
+                "runtime_adapter": adapter,
+                "nvidia_smi": gpu_text,
+                "nvidia_smi_error": gpu_error,
+                "host_os": platform.platform(),
+                "host_gpu_inventory": gpu_name,
+            },
+            indent=2,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    accessibility_path.write_text(
+        json.dumps(
+            accessibility_report or {"error": accessibility_error or "UI Automation report unavailable"},
+            ensure_ascii=False,
+            indent=2,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    source_sha = _git_sha()
+    runner_sha = hashlib.sha256(
+        f"{platform.platform()}|{platform.machine()}|{socket.gethostname()}".encode("utf-8")
+    ).hexdigest()
+    evidence = {
+        "stage": "hardware",
+        "display_cell": display_cell,
+        "sdk": project,
+        "consumer_language": project,
+        "engine_version": manifest["engine_version"],
+        "sdk_version": manifest["engine_version"],
+        "protocol_version": manifest["protocol"],
+        "runtime_version": manifest["engine_version"],
+        "target": manifest["target"],
+        "backend": "D3D12",
+        "gpu_kind": "discrete" if hardware_verified else None,
+        "gpu_vendor": "NVIDIA" if hardware_verified else None,
+        "source_sha": source_sha,
+        "runtime_build_sha": manifest["build_sha"],
+        "runner_sha": runner_sha,
+        "artifact_sha256": _sha256(executable),
+        "command": [{"name": executable.name, "argv": [str(executable), "counter"]}],
+        "exit_code": 0,
+        "status": "PASS" if not reasons else "UNVERIFIED",
+        "started_at": started_at,
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+        "attachments": [
+            {"path": gpu_path.relative_to(evidence_root).as_posix(), "sha256": _sha256(gpu_path), "kind": "gpu_report"},
+            {"path": accessibility_path.relative_to(evidence_root).as_posix(), "sha256": _sha256(accessibility_path), "kind": "accessibility_report"},
+        ],
+        "reason": "; ".join(reasons) or None,
+    }
+    validate_evidence(evidence, evidence_root)
+    evidence_path = evidence_root / "hardware-win-x64-d3d12.json"
+    if evidence_path.exists():
+        raise FileExistsError(f"refusing to overwrite hardware evidence {evidence_path}")
     evidence_path.write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 

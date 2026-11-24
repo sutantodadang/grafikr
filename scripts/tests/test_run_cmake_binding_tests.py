@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from scripts.run_cmake_binding_tests import _validate_native_parity, _write_gui_evidence
+from scripts.run_cmake_binding_tests import _parse_adapter_report, _validate_native_parity, _write_gui_evidence
 
 
 def parity_output() -> str:
@@ -76,6 +76,7 @@ class NativeGuiEvidenceTests(unittest.TestCase):
                 root, "cpp", "dashboard", executable, manifest,
                 ["dashboard.initial-range", "dashboard.selection", "dashboard.scroll-range"],
                 screenshot, "2026-11-24T00:00:00+00:00",
+                "grafikr-adapter-v1\tbackend=Dx12\tdevice_type=DiscreteGpu\tvendor=10de\tdevice=2783\tname=NVIDIA GeForce RTX 4070 SUPER",
             )
             record = json.loads((root / "gui-cpp-dashboard.json").read_text(encoding="utf-8"))
             self.assertEqual(record["status"], "PASS")
@@ -102,10 +103,21 @@ class NativeGuiEvidenceTests(unittest.TestCase):
                 root, "c", "counter", executable, manifest,
                 ["counter.click-state-update", "counter.unicode-binding"],
                 screenshot, "2026-11-24T00:00:00+00:00",
+                "grafikr-adapter-v1\tbackend=Dx12\tdevice_type=DiscreteGpu\tvendor=10de\tdevice=2783\tname=NVIDIA GeForce RTX 4070 SUPER",
             )
             record = json.loads((root / "gui-c-counter_form.json").read_text(encoding="utf-8"))
             self.assertEqual(record["status"], "UNVERIFIED")
             self.assertIn("IME composition", record["reason"])
+
+    def test_adapter_report_requires_explicit_backend_and_device_identity(self) -> None:
+        report = _parse_adapter_report(
+            "noise\n"
+            "grafikr-adapter-v1\tbackend=Dx12\tdevice_type=DiscreteGpu\tvendor=10de\tdevice=2783\tname=NVIDIA GeForce RTX 4070 SUPER\n"
+        )
+        self.assertEqual(report["backend"], "Dx12")
+        self.assertEqual(report["device_type"], "DiscreteGpu")
+        self.assertEqual(report["vendor"], "10de")
+        self.assertEqual(_parse_adapter_report("no renderer diagnostics"), {})
 
 
 if __name__ == "__main__":

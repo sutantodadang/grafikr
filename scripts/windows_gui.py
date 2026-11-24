@@ -3,11 +3,82 @@
 from __future__ import annotations
 
 import ctypes
+import json
 import os
 import struct
 import subprocess
 import time
 from pathlib import Path
+
+
+def _capture_windows_accessibility(hwnd: int, title: str) -> dict:
+    if os.name != "nt":
+        raise RuntimeError("Windows UI Automation is available only on Windows")
+    script = r"""
+$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+Add-Type -AssemblyName UIAutomationClient
+Add-Type -AssemblyName UIAutomationTypes
+$condition = [System.Windows.Automation.PropertyCondition]::new(
+    [System.Windows.Automation.AutomationElement]::NameProperty,
+    $env:GRAFIKR_UIA_TITLE
+)
+$window = [System.Windows.Automation.AutomationElement]::RootElement.FindFirst(
+    [System.Windows.Automation.TreeScope]::Children,
+    $condition
+)
+if ($null -eq $window) { throw 'Grafikr window was not found in UI Automation tree' }
+$items = $window.FindAll(
+    [System.Windows.Automation.TreeScope]::Descendants,
+    [System.Windows.Automation.Condition]::TrueCondition
+)
+$controls = @(
+    foreach ($item in $items) {
+        $current = $item.Current
+        $value = $null
+        try {
+            $candidate = $item.GetCurrentPropertyValue([System.Windows.Automation.ValuePattern]::ValueProperty)
+            if ($candidate -is [string]) { $value = $candidate }
+        } catch { }
+        [pscustomobject]@{
+            name = $current.Name
+            control_type = $current.ControlType.ProgrammaticName
+            keyboard_focusable = $current.IsKeyboardFocusable
+            value = $value
+        }
+    }
+)
+[pscustomobject]@{
+    window_name = $window.Current.Name
+    native_window_handle = $window.Current.NativeWindowHandle
+    controls = $controls
+} | ConvertTo-Json -Depth 6 -Compress
+"""
+    environment = os.environ.copy()
+    environment["GRAFIKR_UIA_TITLE"] = title
+    environment["GRAFIKR_UIA_HWND"] = str(hwnd)
+    completed = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-Sta", "-NonInteractive", "-Command", script],
+        env=environment,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+        timeout=15,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
+    )
+    if completed.returncode != 0:
+        raise RuntimeError(f"Windows UI Automation query failed: {completed.stderr[-2000:]}")
+    try:
+        report = json.loads(completed.stdout)
+    except json.JSONDecodeError as error:
+        raise RuntimeError("Windows UI Automation returned invalid JSON") from error
+    if not isinstance(report, dict) or not isinstance(report.get("controls"), list):
+        raise RuntimeError("Windows UI Automation returned an invalid control tree")
+    if report.get("native_window_handle") != hwnd:
+        raise RuntimeError("Windows UI Automation returned a different window handle")
+    return report
 
 
 def _wait_for_windows_window(process: subprocess.Popen, title: str, timeout: float) -> int:
