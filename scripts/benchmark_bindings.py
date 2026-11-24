@@ -124,8 +124,10 @@ def _run_endpoint(command: list[str], label: str, workload: str, warmups: int, c
             state = _exchange(process, f"{label}-create", "state.create", {"value": {"type": "i64", "value": "1"}})["result"]["state"]
             args = {"state": state}
         else:
-            window = _exchange(process, f"{label}-window", "window.create", {"title": "Grafikr benchmark", "width": 320, "height": 200})["result"]["window"]
+            window_result = _exchange(process, f"{label}-window", "window.create", {"title": "Grafikr benchmark", "width": 320, "height": 200})["result"]
+            window, root = window_result["window"], window_result["root"]
             node = _exchange(process, f"{label}-node", "node.create", {"window": window, "widget": "Text", "properties": {"text": "benchmark warmup"}})["result"]["node"]
+            _exchange(process, f"{label}-attach", "node.attach", {"node": node, "parent": root})
             args = {"node": node, "properties": {"text": "benchmark update 0"}}
         for index in range(warmups):
             if workload == "label_update":
