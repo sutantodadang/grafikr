@@ -1,4 +1,4 @@
-"""Compare headless C ABI and IPC state.get request-to-response latency."""
+"""Compare headless C ABI and IPC request latency for one protocol operation."""
 
 from __future__ import annotations
 
@@ -18,9 +18,9 @@ from typing import Any
 from scripts.build_runtime import validate_manifest
 
 
-SCOPE = "headless state.get request-to-response"
+SCOPE = "headless native/IPC request and label update latency"
 ENDPOINT = "request_to_response"
-WORKLOAD = "state.get"
+WORKLOADS = {"request_latency": "state.get", "label_update": "property.update"}
 # shortcut: desktop workloads are unavailable in this headless run; add them when native GUI runners can collect real OS input.
 
 
@@ -39,21 +39,24 @@ def _summary(run: dict[str, Any]) -> dict[str, Any]:
 
 
 def build_report(native: dict[str, Any], ipc: dict[str, Any], hardware: dict[str, Any]) -> dict[str, Any]:
-    for label, run in (("native", native), ("IPC", ipc)):
-        if run.get("endpoint") != ENDPOINT:
-            raise ValueError(f"{label} benchmark endpoint must be {ENDPOINT}")
-        if run.get("workload") != WORKLOAD:
-            raise ValueError(f"{label} benchmark workload must be {WORKLOAD}")
-        _summary(run)
-    if native["endpoint"] != ipc["endpoint"]:
-        raise ValueError("native and IPC endpoint mismatch")
-    if native["workload"] != ipc["workload"]:
-        raise ValueError("native and IPC workload mismatch")
-    for run in (native, ipc):
-        if type(run.get("warmup_count")) is not int or run["warmup_count"] < 0 or type(run.get("measured_count")) is not int or run["measured_count"] < 1:
-            raise ValueError("benchmark sample plan must have non-negative warmups and positive measured samples")
-    if native.get("warmup_count") != ipc.get("warmup_count") or native.get("measured_count") != ipc.get("measured_count"):
-        raise ValueError("native and IPC sample plans do not match")
+    native_runs = {native["workload"]: native} if "workload" in native else native
+    ipc_runs = {ipc["workload"]: ipc} if "workload" in ipc else ipc
+    if not isinstance(native_runs, dict) or not isinstance(ipc_runs, dict) or not native_runs:
+        raise ValueError("native and IPC workloads must be non-empty mappings")
+    if set(native_runs) != set(ipc_runs) or set(native_runs) - set(WORKLOADS):
+        raise ValueError("native and IPC workloads must contain the same supported workload names")
+    for workload in native_runs:
+        for label, run in (("native", native_runs[workload]), ("IPC", ipc_runs[workload])):
+            if run.get("endpoint") != ENDPOINT:
+                raise ValueError(f"{label} benchmark endpoint must be {ENDPOINT}")
+            if run.get("workload") != workload:
+                raise ValueError(f"{label} benchmark workload does not match {workload}")
+            _summary(run)
+            if type(run.get("warmup_count")) is not int or run["warmup_count"] < 0 or type(run.get("measured_count")) is not int or run["measured_count"] < 1:
+                raise ValueError("benchmark sample plan must have non-negative warmups and positive measured samples")
+        native_run, ipc_run = native_runs[workload], ipc_runs[workload]
+        if native_run["warmup_count"] != ipc_run["warmup_count"] or native_run["measured_count"] != ipc_run["measured_count"]:
+            raise ValueError("native and IPC sample plans do not match")
     required_hardware = ("os", "architecture", "cpu", "logical_cpu_count")
     if not isinstance(hardware, dict) or any(
         not isinstance(hardware.get(key), str)
@@ -68,13 +71,25 @@ def build_report(native: dict[str, Any], ipc: dict[str, Any], hardware: dict[str
         "format": "grafikr-bindings-benchmark-v1",
         "scope": SCOPE,
         "endpoint": ENDPOINT,
-        "workload": WORKLOAD,
+        "workloads_measured": sorted(native_runs),
         "hardware": hardware,
-        "warmup_count": native["warmup_count"],
-        "measured_count": native["measured_count"],
-        "native": _summary(native),
-        "ipc": _summary(ipc),
-        "notice": "Headless request latency only; this does not measure GUI, GPU, scroll, resource lifecycle, RSS, or idle redraw workloads.",
+        "warmup_count": native_runs["request_latency"]["warmup_count"] if "request_latency" in native_runs else None,
+        "measured_count": native_runs["request_latency"]["measured_count"] if "request_latency" in native_runs else None,
+        "workloads": {
+            workload: {
+                endpoint: {
+                    **_summary(run),
+                    "endpoint": run["endpoint"],
+                    "samples_ns": run["samples_ns"],
+                }
+                for endpoint, runs in (("native", native_runs), ("ipc", ipc_runs))
+                for run in (runs[workload],)
+            }
+            for workload in native_runs
+        },
+        "native": _summary(native_runs["request_latency"]) if "request_latency" in native_runs else None,
+        "ipc": _summary(ipc_runs["request_latency"]) if "request_latency" in ipc_runs else None,
+        "notice": "Headless request and label update latency only; this does not measure GUI, GPU, scroll, resource lifecycle, RSS, or idle redraw workloads.",
     }
 
 
@@ -100,20 +115,30 @@ def _exchange(process: subprocess.Popen[bytes], request_id: str, op: str, args: 
     return response
 
 
-def _run_endpoint(command: list[str], label: str, warmups: int, count: int) -> dict[str, Any]:
+def _run_endpoint(command: list[str], label: str, workload: str, warmups: int, count: int) -> dict[str, Any]:
     process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
         _exchange(process, f"{label}-hello", "hello", {"protocol_major": 1, "protocol_minor": 0, "sdk_version": "benchmark"})
-        state = _exchange(process, f"{label}-create", "state.create", {"value": {"type": "i64", "value": "1"}})["result"]["state"]
-        args = {"state": state}
+        operation = WORKLOADS[workload]
+        if workload == "request_latency":
+            state = _exchange(process, f"{label}-create", "state.create", {"value": {"type": "i64", "value": "1"}})["result"]["state"]
+            args = {"state": state}
+        else:
+            window = _exchange(process, f"{label}-window", "window.create", {"title": "Grafikr benchmark", "width": 320, "height": 200})["result"]["window"]
+            node = _exchange(process, f"{label}-node", "node.create", {"window": window, "widget": "Text", "properties": {"text": "benchmark warmup"}})["result"]["node"]
+            args = {"node": node, "properties": {"text": "benchmark update 0"}}
         for index in range(warmups):
-            _exchange(process, f"{label}-warm-{index}", WORKLOAD, args)
+            if workload == "label_update":
+                args["properties"]["text"] = f"benchmark update {index}"
+            _exchange(process, f"{label}-warm-{index}", operation, args)
         samples: list[int] = []
         for index in range(count):
+            if workload == "label_update":
+                args["properties"]["text"] = f"benchmark update {warmups + index}"
             start = time.perf_counter_ns()
-            _exchange(process, f"{label}-sample-{index}", WORKLOAD, args)
+            _exchange(process, f"{label}-sample-{index}", operation, args)
             samples.append(time.perf_counter_ns() - start)
-        return {"endpoint": ENDPOINT, "workload": WORKLOAD, "warmup_count": warmups, "measured_count": count, "samples_ns": samples}
+        return {"endpoint": ENDPOINT, "workload": workload, "operation": operation, "warmup_count": warmups, "measured_count": count, "samples_ns": samples}
     finally:
         if process.stdin is not None:
             try:
@@ -209,18 +234,30 @@ def main(argv: list[str] | None = None) -> int:
         args.out.mkdir(parents=True, exist_ok=True)
         started_at = datetime.now(timezone.utc).isoformat()
         runtime = _runtime_metadata(native, host)
-        native_run = _run_endpoint([str(native), "--stream"], "native", args.warmups, args.samples)
-        ipc_run = _run_endpoint([str(host)], "ipc", args.warmups, args.samples)
-        report = build_report(native_run, ipc_run, _hardware())
+        native_runs = {
+            workload: _run_endpoint([str(native), "--stream"], f"native-{workload}", workload, args.warmups, args.samples)
+            for workload in WORKLOADS
+        }
+        ipc_runs = {
+            workload: _run_endpoint([str(host)], f"ipc-{workload}", workload, args.warmups, args.samples)
+            for workload in WORKLOADS
+        }
+        report = build_report(native_runs, ipc_runs, _hardware())
         report["runtime"] = runtime
         report["started_at"] = started_at
         report["finished_at"] = datetime.now(timezone.utc).isoformat()
-        (args.out / "native-samples.json").write_text(json.dumps(native_run, indent=2) + "\n", encoding="utf-8")
-        (args.out / "ipc-samples.json").write_text(json.dumps(ipc_run, indent=2) + "\n", encoding="utf-8")
+        (args.out / "native-samples.json").write_text(json.dumps(native_runs, indent=2) + "\n", encoding="utf-8")
+        (args.out / "ipc-samples.json").write_text(json.dumps(ipc_runs, indent=2) + "\n", encoding="utf-8")
+        raw = {
+            "format": "grafikr-bindings-benchmark-evidence-v1",
+            "workloads": report["workloads"],
+            "notice": "Only request_latency and label_update are collected by this headless runner. The release evidence gate requires GUI and resource workload collectors too.",
+        }
+        (args.out / "benchmark-raw.json").write_text(json.dumps(raw, indent=2) + "\n", encoding="utf-8")
         (args.out / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as error:
         parser.exit(1, f"benchmark failed: {error}\n")
-    print(f"{SCOPE}: native p50={report['native']['p50_ns']}ns p95={report['native']['p95_ns']}ns; IPC p50={report['ipc']['p50_ns']}ns p95={report['ipc']['p95_ns']}ns")
+    print(f"{SCOPE}: {len(report['workloads'])} workloads; native request p50={report['native']['p50_ns']}ns; IPC request p50={report['ipc']['p50_ns']}ns")
     return 0
 
 
