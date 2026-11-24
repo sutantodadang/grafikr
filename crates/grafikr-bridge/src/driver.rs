@@ -71,6 +71,7 @@ impl AppDriver for BridgeDriver {
                 }
             };
             let batch_full = requests.len() == 64;
+            let batch_empty = requests.is_empty();
             let stop = {
                 let mut backend = ShellBackend::new(cx);
                 let now = Instant::now();
@@ -115,11 +116,18 @@ impl AppDriver for BridgeDriver {
                 stop
             };
             let stopping = self.control.lifecycle() == Lifecycle::Stopping;
-            if stop || (stopping && !batch_full) {
+            if stop {
                 cx.stop();
                 return;
             }
-            if !stopping || !batch_full {
+            if stopping {
+                if batch_empty {
+                    cx.stop();
+                    return;
+                }
+                continue;
+            }
+            if !batch_full {
                 break;
             }
         }
