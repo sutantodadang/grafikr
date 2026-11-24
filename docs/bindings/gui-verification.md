@@ -34,10 +34,18 @@ rtk proxy uv run --no-project --with-requirements scripts/requirements-bindings.
 
 This uses `SendInput`, forces the D3D12 backend, captures each application
 window, and writes hashed client-state/evidence records. In the local Windows
-build 26200 run, both dashboard records passed. The counter/form records remain
-unverified because the harness does not test IME composition/focus preservation;
-the multi-window records remain unverified because it does not test modal focus
-trapping. Those records are correctly excluded from the full GUI pass count.
+build 26200 run, both dashboard records passed. A separate hardware record also
+passed after the runtime reported the selected discrete D3D12 adapter and the
+UI Automation tree exposed the button name/focus and Unicode field value. The
+counter/form records remain unverified because the harness does not test IME
+composition/focus preservation; the multi-window records remain unverified
+because it does not test modal focus trapping. Those records are excluded from
+the full GUI pass count.
+
+The renderer diagnostic is enabled only when the scenario runner sets
+`GRAFIKR_RENDERER_INFO`; normal application runs do not log adapter details. The
+runtime honors `WGPU_BACKEND` through wgpu's environment-aware instance
+descriptor, and evidence uses the adapter actually selected by the app.
 
 Run the manual `Cross-language release evidence gate` workflow with the tested
 source commit, the Actions run ID holding the evidence artifact, and its artifact

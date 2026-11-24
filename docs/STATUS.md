@@ -17,16 +17,19 @@ multi-vendor physical GPU matrix remain unverified.
 | M5 — Alpha/optimization | done* | multi-window, animation scheduler + Transition, glyph/image caches, shadow, batching, benchmarks, `UiStats`/`RendererStats`; RSS profiling still missing |
 | M6 — Cross-platform beta | partial | grid, ComboBox, 50k DataGrid, TreeView, and golden images exist; Wayland/X11/macOS and the GPU matrix are untested |
 | M7 — Toward 1.0 | partial | 1.0 API, SemVer, license, packaging metadata, tutorial, migration guide, CI benchmark, device-loss recovery; crates.io publication and hardware verification still missing |
-| M8 — Cross-language SDKs | partial | shared bridge, C ABI, IPC host, twelve SDK groups, and all six target package bundles pass CI; 336 installed desktop scenarios and hardware/accessibility evidence remain open |
+| M8 — Cross-language SDKs | partial | shared bridge, C ABI, IPC host, twelve SDK groups, and all six target package bundles pass CI; only two of 336 GUI scenarios and one of eight hardware/accessibility cells pass in the local native Windows run; the full matrix remains open |
 
 The latest cross-language workflow, run `45312336399` on commit `bf3af3a`, passed
 all six native runtime target jobs and the Linux package matrix. Its index
 contains 88 artifacts for all six runtime targets, with no pending entries and
 `source_dirty=false`. Clean package consumers and the installed Lua source-rock
-scenarios passed. The full GUI matrix (336 scenarios), eight
-hardware/accessibility cells, and eight native-versus-IPC benchmark cells remain
-unverified. See [`bindings/support-matrix.md`](bindings/support-matrix.md) for
-the evidence boundary and remaining gates. No SDK package has been published.
+scenarios passed. A clean local Windows bundle from commit `a3db248` selected
+the NVIDIA RTX 4070 SUPER through D3D12; two C/C++ dashboard scenarios and one
+hardware/accessibility cell passed. Four C/C++ counter/multi-window scenarios
+remain unverified, 330 GUI scenarios have no record, seven hardware/accessibility
+cells remain open, and all eight native-versus-IPC benchmark cells remain open.
+See [`bindings/support-matrix.md`](bindings/support-matrix.md) for the evidence
+boundary and remaining gates. No SDK package has been published.
 
 `*` means the core feature is complete, with the gaps recorded below.
 

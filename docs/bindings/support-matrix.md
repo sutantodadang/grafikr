@@ -30,21 +30,30 @@ behavior.
 
 ## Native desktop evidence collected locally
 
-On a Windows x64 interactive desktop (build 26200), the C and C++ installed
-scenario harnesses were run against the checksummed Windows runtime bundle from
-run `45312336399`, with `WGPU_BACKEND=dx12` and real `SendInput` mouse/keyboard
+On a Windows 11 x64 interactive desktop (build 26200), the C and C++ installed
+scenario harnesses were run against a clean local runtime bundle built from
+commit `a3db248`, with `WGPU_BACKEND=dx12` and real `SendInput` mouse/keyboard
 events. The local evidence directory is
-`.artifacts/bindings/windows-x64-local`; its records identify source SHA
-`f7ed524` separately from runtime build SHA `bf3af3a`.
+`.artifacts/bindings/windows-x64-verified`; its records identify source and
+runtime build SHA `a3db248`, and the manifest has `source_dirty=false`.
 
 The C and C++ dashboard scenarios passed, including the 50,000-row range,
 selection, canvas/image, and cleanup checks. Their counter/form and multi-window
 records remain `UNVERIFIED`: IME/focus preservation and modal focus trapping
 were not exercised. This leaves 334 of 336 GUI scenario cells incomplete. The
-local machine reports an NVIDIA RTX 4070 SUPER, but the run did not capture a
-verified adapter/accessibility report, so all eight hardware/accessibility
-cells remain open. No native-versus-IPC workload benchmark evidence was
-collected; all eight benchmark cells remain open.
+Windows x64 hardware/accessibility cell passed: the application reported its
+actual D3D12 adapter as a discrete NVIDIA RTX 4070 SUPER, and Windows UI
+Automation exposed a named, keyboard-focusable Increment button and the Unicode
+text-field value; OS keyboard input updated the bound state. Seven
+hardware/accessibility cells remain open. No native-versus-IPC workload
+benchmark evidence was collected; all eight benchmark cells remain open.
+
+An earlier Windows attempt used the CI bundle from `bf3af3a`. Diagnostics showed
+that it selected Vulkan despite the test harness setting `WGPU_BACKEND=dx12`,
+because the shell used wgpu's non-environment instance constructor. Those early
+records are superseded and excluded. The shell now applies the backend variable
+and reports the selected adapter only when test diagnostics are explicitly
+enabled.
 
 A fresh Windows x64 development-fixture bundle was built at
 `target/runtime/continuation-current-windows-x64`. Its manifest verifies as
@@ -62,10 +71,10 @@ SDK and package consumer checks. These are build and installed-consumer results,
 not registry publication or native desktop support evidence.
 
 The full evidence gate still has no complete desktop display cell and no
-physical hardware/accessibility or native-versus-IPC benchmark records. The
-local Windows run contributes two passing dashboard scenarios; it does not
-make the Windows x64 display cell complete. Headless installed SDK scenarios
-and Xvfb input tests do not count as native desktop GUI evidence.
+native-versus-IPC benchmark records. The local Windows run contributes two
+passing GUI scenarios and one hardware/accessibility cell; it does not make the
+Windows x64 display cell complete. Headless installed SDK scenarios and Xvfb
+input tests do not count as native desktop GUI evidence.
 
 ## Open release gates
 
@@ -81,7 +90,8 @@ and Xvfb input tests do not count as native desktop GUI evidence.
   cells remain missing. Linux Wayland and physical GPU/accessibility behavior
   are unverified.
 - Windows x64 has two locally passing dashboard scenarios and four unverified
-  counter/multi-window scenarios across C and C++. No display cell is complete.
+  counter/multi-window scenarios across C and C++, plus one passing
+  hardware/accessibility cell. No display cell is complete.
 - Xvfb and software Vulkan do not establish physical GPU, Wayland, or
   accessibility behavior.
 
