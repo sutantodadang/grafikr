@@ -1,4 +1,4 @@
-"""Compare headless C ABI and IPC request latency for one protocol operation."""
+"""Compare headless C ABI and IPC request and label-update latency."""
 
 from __future__ import annotations
 
@@ -164,6 +164,13 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _require_release_runtime(manifest: dict[str, Any]) -> None:
+    if manifest.get("source_dirty") is not False:
+        raise ValueError("benchmark runtime must be built from a clean source tree")
+    if manifest.get("development_fixture") is not False:
+        raise ValueError("benchmark runtime must not contain the development fixture")
+
+
 def _hardware() -> dict[str, Any]:
     cpu = platform.processor() or os.environ.get("PROCESSOR_IDENTIFIER")
     if not cpu:
@@ -180,6 +187,7 @@ def _runtime_metadata(native: Path, host: Path) -> dict[str, Any]:
     bundle = host.parent.parent.resolve()
     manifest_path = bundle / "manifest.json"
     manifest = validate_manifest(bundle)
+    _require_release_runtime(manifest)
     entries = {entry["path"]: entry for entry in manifest["files"]}
     host_relative = host.resolve().relative_to(bundle).as_posix()
     if host_relative not in entries or _sha256(host) != entries[host_relative]["sha256"]:

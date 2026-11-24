@@ -1,6 +1,6 @@
 import unittest
 
-from scripts.benchmark_bindings import build_report
+from scripts.benchmark_bindings import _require_release_runtime, build_report
 
 
 class BenchmarkReportTests(unittest.TestCase):
@@ -87,6 +87,14 @@ class BenchmarkReportTests(unittest.TestCase):
 
         self.assertEqual(set(report["workloads"]), {"request_latency", "label_update"})
         self.assertEqual(report["workloads"]["label_update"]["ipc"]["p50_ns"], 300)
+
+    def test_benchmark_requires_clean_non_fixture_runtime(self):
+        clean = {"source_dirty": False, "development_fixture": False}
+        _require_release_runtime(clean)
+        with self.assertRaisesRegex(ValueError, "clean source tree"):
+            _require_release_runtime({**clean, "source_dirty": True})
+        with self.assertRaisesRegex(ValueError, "development fixture"):
+            _require_release_runtime({**clean, "development_fixture": True})
 
 
 if __name__ == "__main__":
