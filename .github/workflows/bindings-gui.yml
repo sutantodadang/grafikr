@@ -47,7 +47,7 @@ jobs:
         env:
           GRAFIKR_SOURCE_SHA: ${{ inputs.source_sha }}
         run: >-
-          rtk proxy python scripts/check_bindings_evidence.py
+          rtk proxy python -m scripts.check_bindings_evidence
           --root .artifacts/bindings
           --mode full
           --source-sha "$GRAFIKR_SOURCE_SHA"
