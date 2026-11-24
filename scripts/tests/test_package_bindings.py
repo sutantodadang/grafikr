@@ -363,6 +363,17 @@ class PackageBindingTests(unittest.TestCase):
         self.assertIn("ThirdPartyNotices/swift-crypto-LICENSE.txt", swift_paths)
         self.assertIn("ThirdPartyNotices/swift-asn1-LICENSE.txt", swift_paths)
 
+    def test_lua_source_rock_declares_its_flat_archive_directory(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            artifact = _pack_source_snapshot(
+                _source_sdk_files("lua", "1.1.0"),
+                Path(temporary),
+                "grafikr-1.1.0-1.src.rock",
+            )
+            with zipfile.ZipFile(artifact) as archive:
+                rockspec = archive.read("grafikr-1.1.0-1.rockspec").decode("utf-8")
+        self.assertIn('dir = "."', rockspec)
+
     def test_ruby_platform_gem_contains_sdk_example_and_license_sources(self):
         paths = {member for _, member in _ruby_sdk_files()}
         self.assertIn("lib/grafikr/runtime.rb", paths)

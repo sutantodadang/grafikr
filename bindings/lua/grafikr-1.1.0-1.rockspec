@@ -1,6 +1,6 @@
 package = "grafikr"
 version = "1.1.0-1"
-source = { url = "git+https://github.com/grafikr/grafikr-lua.git" }
+source = { url = "git+https://github.com/grafikr/grafikr-lua.git", dir = "." }
 description = { summary = "Grafikr desktop UI client for Lua 5.4", license = "AGPL-3.0-only" }
 dependencies = { "lua >= 5.4, < 5.5", "luv >= 1.48", "dkjson >= 2.8" }
 build = {
