@@ -18,3 +18,11 @@ modal focus, Escape, one-window close, and final shutdown. The C and C++ install
 scenario harnesses pass those input flows under local Xvfb/X11, but use a
 temporary mixed Linux bundle and do not populate the required desktop display
 cells. No scenario has passed on a native desktop runner yet.
+
+Run the manual `Cross-language release evidence gate` workflow with the tested
+source commit, the Actions run ID holding the evidence artifact, and its artifact
+name. The artifact must preserve the evidence JSON and all attachment files at
+the relative paths named by each record. The workflow checks that every record
+matches the supplied source SHA and uploads the audit report, including when
+the gate fails. It consumes captured evidence; it does not produce GUI,
+physical-GPU, accessibility, or benchmark evidence itself.

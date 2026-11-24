@@ -1,0 +1,62 @@
+name: Cross-language release evidence gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      evidence_run_id:
+        description: Actions run ID that contains the captured evidence artifact
+        required: true
+        type: string
+      evidence_artifact:
+        description: Artifact containing evidence JSON and its relative attachments
+        required: true
+        default: grafikr-cross-language-evidence
+        type: string
+      source_sha:
+        description: Exact 40-character source commit tested by the evidence
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  full-evidence-gate:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install RTK
+        run: cargo install --git https://github.com/rtk-ai/rtk --rev e288a18c04452fd26192f59132e5324a8bb6924d --locked rtk
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install evidence validator
+        run: rtk proxy python -m pip install -r scripts/requirements-bindings.txt
+      - name: Download captured evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.evidence_artifact }}
+          run-id: ${{ inputs.evidence_run_id }}
+          github-token: ${{ github.token }}
+          path: .artifacts/bindings
+      - name: Enforce the full release evidence matrix
+        env:
+          GRAFIKR_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: >-
+          rtk proxy python scripts/check_bindings_evidence.py
+          --root .artifacts/bindings
+          --mode full
+          --source-sha "$GRAFIKR_SOURCE_SHA"
+          --out .artifacts/bindings/release-gate.json
+      - name: Preserve gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grafikr-cross-language-release-gate-${{ inputs.source_sha }}
+          path: .artifacts/bindings/release-gate.json
+          if-no-files-found: warn
+          retention-days: 30
